@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
+import meadowBg from '@/assets/background/meadow.png';
+import { BackgroundScreen } from '@/ui/BackgroundScreen';
 import { Button } from '@/ui/Button';
-import { Screen } from '@/ui/Screen';
 import { TextField } from '@/ui/TextField';
 import { useProfileStore } from '@/store/profileStore';
 
-export default function ProfileScreen() {
+export default function EnterNameScreen() {
   const router = useRouter();
   const playerName = useProfileStore((state) => state.playerName);
   const setPlayerName = useProfileStore((state) => state.setPlayerName);
@@ -12,15 +13,19 @@ export default function ProfileScreen() {
   const canContinue = playerName.trim().length > 0;
 
   return (
-    <Screen title="Как тебя зовут?">
+    <BackgroundScreen source={meadowBg}>
       <TextField
-        label="Игровое имя"
+        label="Придумай игровое имя"
         value={playerName}
         onChangeText={setPlayerName}
+        placeholder="Никнейм"
         maxLength={20}
       />
-      <Button label="Дальше" disabled={!canContinue} onPress={() => router.push('/pet')} />
-      <Button label="Назад" variant="secondary" onPress={() => router.back()} />
-    </Screen>
+      <Button
+        label="К следующему шагу!"
+        disabled={!canContinue}
+        onPress={() => router.push('/pet')}
+      />
+    </BackgroundScreen>
   );
 }

@@ -3,7 +3,7 @@ export const colors = {
   surface: '#FFFFFF',
   text: '#2B2B2B',
   textMuted: '#6B6B6B',
-  primary: '#6B3FA0',
+  primary: '#391400',
   onPrimary: '#FFFFFF',
   success: '#2E9E5B',
   warning: '#E0A100',

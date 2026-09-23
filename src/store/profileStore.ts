@@ -6,8 +6,10 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 type ProfileState = {
   playerName: string;
   petName: string;
+  petColorId: string;
   onboardingDone: boolean;
   setPlayerName: (name: string) => void;
+  setPetColor: (colorId: string) => void;
   completeOnboarding: (petName: string) => void;
   resetProfile: () => void;
 };
@@ -15,6 +17,7 @@ type ProfileState = {
 const initialData = {
   playerName: '',
   petName: '',
+  petColorId: '',
   onboardingDone: false,
 };
 
@@ -23,6 +26,7 @@ export const useProfileStore = create<ProfileState>()(
     (set) => ({
       ...initialData,
       setPlayerName: (playerName) => set({ playerName }),
+      setPetColor: (petColorId) => set({ petColorId }),
       completeOnboarding: (petName) => set({ petName, onboardingDone: true }),
       resetProfile: () => set(initialData),
     }),

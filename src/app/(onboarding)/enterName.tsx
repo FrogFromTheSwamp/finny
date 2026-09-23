@@ -24,7 +24,7 @@ export default function EnterNameScreen() {
       <Button
         label="К следующему шагу!"
         disabled={!canContinue}
-        onPress={() => router.push('/pet')}
+        onPress={() => router.push('/pet-color')}
       />
     </BackgroundScreen>
   );

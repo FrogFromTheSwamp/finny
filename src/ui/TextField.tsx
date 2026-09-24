@@ -1,18 +1,24 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { colors, fontSize, MIN_TOUCH_SIZE, spacing } from '@/ui/theme';
+import { colors, fontSize, MIN_TOUCH_SIZE, spacing } from "@/ui/theme";
+import { StyleSheet, Text, TextInput, View } from "react-native";
 
 type Props = {
-  label: string;
+  label?: string;
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
   maxLength?: number;
 };
 
-export function TextField({ label, value, onChangeText, placeholder, maxLength }: Props) {
+export function TextField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+  maxLength,
+}: Props) {
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>{label}</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
         style={styles.input}
         value={value}
@@ -33,7 +39,7 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_SIZE,
     borderWidth: 1,
     borderColor: colors.textMuted,
-    borderRadius: 12,
+    borderRadius: 8,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
     fontSize: fontSize.body,

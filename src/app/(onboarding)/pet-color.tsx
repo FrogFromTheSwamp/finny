@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { BounceIn, FadeInUp } from 'react-native-reanimated';
 import meadowBg from '@/assets/background/meadow.png';
-import eggImage from '@/assets/pet/egg.png';
+import eggImage from '@/assets/pet/egg-stage-0.png';
 import { BackgroundScreen } from '@/ui/BackgroundScreen';
 import { PET_COLOR_OPTIONS } from '@/content/petColors';
 import { colors, fontSize, MIN_TOUCH_SIZE, spacing } from '@/ui/theme';
@@ -91,11 +91,11 @@ const styles = StyleSheet.create({
   swatch: {
     width: MIN_TOUCH_SIZE,
     height: MIN_TOUCH_SIZE,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderRadius: 2,
+    borderWidth: 6,
+    borderColor: colors.background,
   },
-  swatchSelected: { borderColor: colors.text, borderWidth: 3 },
+  swatchSelected: { borderColor: colors.text, borderWidth: 6 },
   arrow: {
     alignSelf: 'flex-end',
     width: MIN_TOUCH_SIZE,

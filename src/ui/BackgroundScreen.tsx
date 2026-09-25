@@ -1,7 +1,15 @@
-import type { ReactNode } from 'react';
-import { ImageBackground, StyleSheet, type ImageSourcePropType, type StyleProp, type ViewStyle } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { spacing } from '@/ui/theme';
+import type { ReactNode } from 'react';
+import {
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  type ImageSourcePropType,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Props = {
   source: ImageSourcePropType;
@@ -12,11 +20,16 @@ type Props = {
 export function BackgroundScreen({ source, children, contentStyle }: Props) {
   return (
     <ImageBackground source={source} style={styles.background} resizeMode="cover">
-      <SafeAreaView style={styles.safe}>
-        <SafeAreaView edges={['bottom']} style={[styles.content, contentStyle]}>
-          {children}
+      <KeyboardAvoidingView
+        style={styles.safe}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <SafeAreaView style={styles.safe}>
+          <SafeAreaView edges={['bottom']} style={[styles.content, contentStyle]}>
+            {children}
+          </SafeAreaView>
         </SafeAreaView>
-      </SafeAreaView>
+      </KeyboardAvoidingView>
     </ImageBackground>
   );
 }

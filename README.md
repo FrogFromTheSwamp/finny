@@ -25,15 +25,13 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
+## Сброс локального тестового окружения
 
-When you're ready, run:
+Чтобы удалить локальный Expo-кэш и сохранённый seed тестовых данных, не затрагивая исходники, выполните:
 
 ```bash
 npm run reset-project
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
 ### Other setup steps
 
@@ -54,3 +52,22 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Игровые экраны и тестовые данные
+
+Главная вкладка, «Еда» и «Магазин» собраны на игровых компонентах из `src/game`. Исходные графические материалы из макетов разложены по `src/assets/game`: комнаты, персонажи, продукты по категориям, UI и папка `reference` с контрольными состояниями макета.
+
+После `npm install` проект добавляет локальному Expo CLI поддерживаемый проектом флаг:
+
+```bash
+npx expo start --test-data
+```
+
+При первом таком запуске создаётся случайный seed в `.expo/finny-test-data.json`. На его основе детерминированно создаются имя игрока и питомца, цвет питомца, монеты, серия входов, сытость, содержимое инвентаря и предварительно выбранные товары магазина. Fast Refresh сохраняет состояние текущей тестовой сессии, а новый запуск `npx expo start --test-data` снова подставляет тот же детерминированный набор исходных mock-значений. Для нового набора используйте `npx expo start --test-data --new-test-data`, а для воспроизводимого сценария — `npx expo start --test-data --test-seed demo-01`.
+
+Глобальную реплику можно вызвать из любого триггера:
+
+```ts
+import { showGameDialog } from '@/game/services/dialogService';
+showGameDialog('Текст сообщения', { title: 'Заголовок' });
+```

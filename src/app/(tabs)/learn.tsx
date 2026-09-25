@@ -1,5 +1,2 @@
-import { PlaceholderScreen } from '@/ui/PlaceholderScreen';
-
-export default function LearnScreen() {
-  return <PlaceholderScreen title="Учёба" showBack={false} />;
-}
+import { ComingSoonScreen } from '@/game/components/ComingSoonScreen';
+export default function LearnScreen() { return <ComingSoonScreen title="Учёба" text="Здесь появятся короткие задания и игровые уроки. Экран уже встроен в новую навигацию." />; }

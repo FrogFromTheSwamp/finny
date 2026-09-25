@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import type { PetColorId } from '@/content/petColors';
+import { TEST_DATA_ENABLED, TEST_DATA_SEED, TEST_DATA_SESSION, TEST_PROFILE } from '@/game/testData';
 
 type ProfileState = {
   playerName: string;
@@ -21,10 +22,10 @@ const initialData: Pick<
   ProfileState,
   'playerName' | 'petName' | 'petColorId' | 'onboardingDone'
 > = {
-  playerName: '',
-  petName: '',
-  petColorId: '',
-  onboardingDone: false,
+  playerName: TEST_DATA_ENABLED ? TEST_PROFILE.playerName : '',
+  petName: TEST_DATA_ENABLED ? TEST_PROFILE.petName : '',
+  petColorId: TEST_DATA_ENABLED ? TEST_PROFILE.petColorId : '',
+  onboardingDone: TEST_DATA_ENABLED,
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -46,7 +47,7 @@ export const useProfileStore = create<ProfileState>()(
     }),
 
     {
-      name: 'finny-profile',
+      name: TEST_DATA_ENABLED ? `finny-profile-test-${TEST_DATA_SEED}-${TEST_DATA_SESSION}` : 'finny-profile',
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
     },

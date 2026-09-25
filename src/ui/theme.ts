@@ -25,4 +25,4 @@ export const fontSize = {
   caption: 14,
 } as const;
 
-export const MIN_TOUCH_SIZE = 48;
+export const MIN_TOUCH_SIZE = 56;

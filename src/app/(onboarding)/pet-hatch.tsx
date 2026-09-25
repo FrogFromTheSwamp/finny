@@ -98,9 +98,8 @@ export default function PetHatchScreen() {
 
       {phase === "bursting" && (
         <Animated.Image
-          // entering={ZoomIn.springify().damping(10)}
-          // exiting={FadeOut.duration(700)}
-          entering={FadeIn}
+          entering={ZoomIn.springify().damping(10)}
+          exiting={FadeOut.duration(700)}
           source={burstImage}
           resizeMode="cover"
           style={styles.absoluteFillObject}

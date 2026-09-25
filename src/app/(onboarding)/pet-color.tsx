@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { BounceIn, FadeInUp } from 'react-native-reanimated';
 import meadowBg from '@/assets/background/meadow.png';
 import eggImage from '@/assets/pet/egg-stage-0.png';
+import ArrowImage from '@/assets/symbols/arrow.svg';
 import { BackgroundScreen } from '@/ui/BackgroundScreen';
 import { PET_COLOR_OPTIONS } from '@/content/petColors';
 import { colors, fontSize, MIN_TOUCH_SIZE, spacing } from '@/ui/theme';
@@ -71,7 +72,7 @@ export default function PetColorScreen() {
               onPress={() => router.push('/pet-hatch')}
               style={[styles.arrow, !canContinue && styles.arrowDisabled]}
             >
-              <Text style={styles.arrowText}>→</Text>
+              <ArrowImage width={26} />
             </Pressable>
           </Animated.View>
         )}
@@ -104,6 +105,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    
   },
   arrowDisabled: { opacity: 0.4 },
   arrowText: { color: colors.onPrimary, fontSize: 20 },

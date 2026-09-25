@@ -1,14 +1,15 @@
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
-    Image,
-    ImageBackground,
-    Pressable,
-    StyleSheet,
-    Text,
-    View,
-    useWindowDimensions,
+  Image,
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import meadowBg from '@/assets/background/meadow.png';
 import { PET_ASSETS } from '@/content/petAssets';
@@ -26,8 +27,6 @@ const PALETTE_TOP = 723;
 const SWATCH_SIZE = 66;
 const SWATCH_INNER_SIZE = 50;
 const SWATCH_GAP = 12;
-const ARROW_LEFT = 340;
-const ARROW_TOP = 821;
 const ARROW_SIZE = 56;
 const TEXT_COLOR = '#1E0C00';
 const PRIMARY = '#391401';
@@ -35,7 +34,8 @@ const SWATCH_FRAME = '#EBEBEB';
 
 export default function PetColorScreen() {
   const router = useRouter();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const scale = width / DESIGN_WIDTH;
   const petColorId = useProfileStore((state) => state.petColorId);
   const setPetColor = useProfileStore((state) => state.setPetColor);
@@ -43,6 +43,12 @@ export default function PetColorScreen() {
   const previewColor: PetColorId = petColorId || 'brown';
   const previewEgg = PET_ASSETS[previewColor].eggStages[0];
   const scaleValue = (value: number) => value * scale;
+  const arrowBottom = bottomInset + scaleValue(16);
+  const arrowTop = height - arrowBottom - scaleValue(ARROW_SIZE);
+  const paletteTop = Math.min(
+    scaleValue(PALETTE_TOP),
+    arrowTop - scaleValue(SWATCH_SIZE + 16),
+  );
 
   return (
     <View style={styles.screen}>
@@ -51,13 +57,13 @@ export default function PetColorScreen() {
       <Text style={[styles.title, {
         left: scaleValue(16), top: scaleValue(TITLE_TOP), width: scaleValue(380),
         fontSize: scaleValue(34), lineHeight: scaleValue(39),
-      }]}>Выбери цвет твоего{ '\n' }будущего питомца</Text>
+      }]}>Выбери цвет твоего{'\n'}будущего питомца</Text>
       <Image source={previewEgg} resizeMode="contain" style={{
         position: 'absolute', left: scaleValue(EGG_LEFT), top: scaleValue(EGG_TOP),
         width: scaleValue(EGG_WIDTH), height: scaleValue(EGG_HEIGHT),
       }} />
       <View style={[styles.palette, {
-        left: scaleValue(PALETTE_LEFT), top: scaleValue(PALETTE_TOP), gap: scaleValue(SWATCH_GAP),
+        left: scaleValue(PALETTE_LEFT), top: paletteTop, gap: scaleValue(SWATCH_GAP),
       }]}>
         {PET_COLOR_OPTIONS.map((option) => {
           const selected = petColorId === option.id;
@@ -89,7 +95,7 @@ export default function PetColorScreen() {
         disabled={!canContinue}
         onPress={() => router.push('/pet-hatch')}
         style={({ pressed }) => [styles.arrowButton, {
-          left: scaleValue(ARROW_LEFT), top: scaleValue(ARROW_TOP),
+          right: scaleValue(16), bottom: arrowBottom,
           width: scaleValue(ARROW_SIZE), height: scaleValue(ARROW_SIZE),
           borderRadius: scaleValue(ARROW_SIZE / 2), opacity: canContinue ? 1 : 0.4,
         }, pressed && canContinue && styles.pressed]}

@@ -1,3 +1,10 @@
+export const fontFamily = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semiBold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+} as const;
+
 export const colors = {
   background: '#FFF8F0',
   surface: '#FFFFFF',
@@ -25,4 +32,4 @@ export const fontSize = {
   caption: 14,
 } as const;
 
-export const MIN_TOUCH_SIZE = 48;
+export const MIN_TOUCH_SIZE = 56;

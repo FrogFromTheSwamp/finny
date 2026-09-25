@@ -3,18 +3,24 @@ import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import type { PetColorId } from '@/content/petColors';
+
 type ProfileState = {
   playerName: string;
   petName: string;
-  petColorId: string;
+  petColorId: PetColorId | '';
   onboardingDone: boolean;
+
   setPlayerName: (name: string) => void;
-  setPetColor: (colorId: string) => void;
+  setPetColor: (colorId: PetColorId) => void;
   completeOnboarding: (petName: string) => void;
   resetProfile: () => void;
 };
 
-const initialData = {
+const initialData: Pick<
+  ProfileState,
+  'playerName' | 'petName' | 'petColorId' | 'onboardingDone'
+> = {
   playerName: '',
   petName: '',
   petColorId: '',
@@ -25,29 +31,43 @@ export const useProfileStore = create<ProfileState>()(
   persist(
     (set) => ({
       ...initialData,
+
       setPlayerName: (playerName) => set({ playerName }),
+
       setPetColor: (petColorId) => set({ petColorId }),
-      completeOnboarding: (petName) => set({ petName, onboardingDone: true }),
+
+      completeOnboarding: (petName) =>
+        set({
+          petName,
+          onboardingDone: true,
+        }),
+
       resetProfile: () => set(initialData),
     }),
+
     {
-      name: 'finny-profile', // ключ в AsyncStorage
-      version: 1, // пригодится, если структура данных изменится
+      name: 'finny-profile',
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),
 );
 
-// Чтение из AsyncStorage асинхронное, поэтому нужно знать,
-// когда данные уже восстановлены.
 export function useProfileHydrated() {
-  const [hydrated, setHydrated] = useState(useProfileStore.persist.hasHydrated());
+  const [hydrated, setHydrated] = useState(
+    useProfileStore.persist.hasHydrated(),
+  );
 
   useEffect(() => {
-    const unsubscribe = useProfileStore.persist.onFinishHydration(() =>
-      setHydrated(true),
+    const unsubscribe =
+      useProfileStore.persist.onFinishHydration(() =>
+        setHydrated(true),
+      );
+
+    setHydrated(
+      useProfileStore.persist.hasHydrated(),
     );
-    setHydrated(useProfileStore.persist.hasHydrated());
+
     return unsubscribe;
   }, []);
 

@@ -21,6 +21,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import {AppText} from '@/ui/AppText'
 
 const BURST_DURATION_MS = 900;
 const NAME_FORM_DELAY_MS = 500;
@@ -79,7 +80,7 @@ export default function PetHatchScreen() {
     <BackgroundScreen source={meadowBg} contentStyle={styles.layout}>
       {phase === "cracking" && (
         <>
-          <Text style={styles.hint}>{HATCH_STAGES[tapCount].caption}</Text>
+          <AppText variant="heading" style={styles.hint}>{HATCH_STAGES[tapCount].caption}</AppText>
           <View style={styles.imageSlot}>
             <Pressable
               accessibilityRole="button"
@@ -108,6 +109,7 @@ export default function PetHatchScreen() {
 
       {phase === "revealed" && (
         <View style={styles.revealedContainer}>
+          <AppText variant="heading" style={styles.text}>Какой хорошенький! Как его назовёшь?</AppText>
           <PetStage>
             <Animated.Image
               entering={BounceIn.duration(600)}
@@ -122,9 +124,6 @@ export default function PetHatchScreen() {
               entering={FadeInUp.duration(400)}
               style={styles.footer}
             >
-              <Text style={styles.hint}>
-                Какой хорошенький! Как его назовёшь?
-              </Text>
               <TextField
                 value={petName}
                 onChangeText={setPetName}
@@ -145,6 +144,7 @@ export default function PetHatchScreen() {
 }
 
 const styles = StyleSheet.create({
+  text: {textAlign: 'left'},
   layout: { justifyContent: "space-between" },
   hint: { fontSize: fontSize.heading, color: colors.text, textAlign: "center" },
   imageSlot: { flex: 1, justifyContent: "center" },

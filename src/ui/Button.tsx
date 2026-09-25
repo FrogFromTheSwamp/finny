@@ -1,5 +1,6 @@
-import { colors, fontSize, MIN_TOUCH_SIZE, spacing } from "@/ui/theme";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { AppText } from "@/ui/AppText";
+import { colors, MIN_TOUCH_SIZE, spacing } from "@/ui/theme";
+import { Pressable, StyleSheet } from "react-native";
 
 type Props = {
   label: string;
@@ -29,14 +30,12 @@ export function Button({
         pressed && styles.pressed,
       ]}
     >
-      <Text
-        style={[
-          styles.text,
-          isPrimary ? styles.textPrimary : styles.textSecondary,
-        ]}
+      <AppText
+        variant="button"
+        style={isPrimary ? styles.textPrimary : styles.textSecondary}
       >
         {label}
-      </Text>
+      </AppText>
     </Pressable>
   );
 }
@@ -57,7 +56,6 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
   disabled: { opacity: 0.4 },
-  text: { fontSize: fontSize.body },
   textPrimary: { color: colors.onPrimary },
   textSecondary: { color: colors.primary },
 });

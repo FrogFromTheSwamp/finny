@@ -2,6 +2,7 @@ import { useRouter, type Href } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fontSize, MIN_TOUCH_SIZE, spacing } from '@/ui/theme';
+import { AppText } from '@/ui/AppText'
 
 type ScreenLink = {
   label: string;
@@ -21,7 +22,7 @@ export function PlaceholderScreen({ title, links = [], showBack = true }: Props)
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <Text style={styles.title}>{title}</Text>
+        <AppText variant='title' style={styles.title}>{title}</AppText>
 
         {links.map((link) => (
           <Pressable
@@ -31,7 +32,7 @@ export function PlaceholderScreen({ title, links = [], showBack = true }: Props)
               link.replace ? router.replace(link.href) : router.push(link.href)
             }
           >
-            <Text style={styles.buttonText}>{link.label}</Text>
+            <AppText variant='button' style={styles.buttonText}>{link.label}</AppText>
           </Pressable>
         ))}
 
@@ -40,7 +41,7 @@ export function PlaceholderScreen({ title, links = [], showBack = true }: Props)
             style={[styles.button, styles.secondary]}
             onPress={() => router.back()}
           >
-            <Text style={styles.secondaryText}>Назад</Text>
+            <AppText variant='button' style={styles.secondaryText}>Назад</AppText>
           </Pressable>
         )}
       </View>

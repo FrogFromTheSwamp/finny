@@ -1,6 +1,13 @@
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import { useProfileHydrated, useProfileStore } from '@/store/profileStore';
 
 SplashScreen.preventAutoHideAsync();
@@ -8,14 +15,22 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const hydrated = useProfileHydrated();
   const onboardingDone = useProfileStore((state) => state.onboardingDone);
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  const ready = hydrated && fontsLoaded;
 
   useEffect(() => {
-    if (hydrated) {
+    if (ready) {
       SplashScreen.hideAsync();
     }
-  }, [hydrated]);
+  }, [ready]);
 
-  if (!hydrated) {
+  if (!ready) {
     return null;
   }
 

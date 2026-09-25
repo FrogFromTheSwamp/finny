@@ -9,6 +9,7 @@ import { BackgroundScreen } from '@/ui/BackgroundScreen';
 import { PET_COLOR_OPTIONS } from '@/content/petColors';
 import { colors, fontSize, MIN_TOUCH_SIZE, spacing } from '@/ui/theme';
 import { useProfileStore } from '@/store/profileStore';
+import { AnimatedAppText } from '@/ui/AppText';
 
 const REVEAL_DELAY_MS = 700;
 
@@ -29,9 +30,7 @@ export default function PetColorScreen() {
     <BackgroundScreen source={meadowBg} contentStyle={styles.layout}>
       <View style={styles.titleSlot}>
         {revealed && (
-          <Animated.Text entering={FadeInUp.duration(300)} style={styles.title}>
-            Выбери цвет твоего будущего питомца
-          </Animated.Text>
+          <AnimatedAppText variant='heading' entering={FadeInUp.duration(300)} style={styles.title}>Выбери цвет твоего будущего питомца</AnimatedAppText>
         )}
       </View>
 

@@ -17,6 +17,7 @@ type Props = {
   contentStyle?: StyleProp<ViewStyle>;
 };
 
+
 export function BackgroundScreen({ source, children, contentStyle }: Props) {
   return (
     <ImageBackground source={source} style={styles.background} resizeMode="cover">

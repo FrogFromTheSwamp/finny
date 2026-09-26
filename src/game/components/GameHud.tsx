@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Path } from 'react-native-svg';
 import fire from '@/assets/game/ui/streak-fire.png';
 import { HungerMeter } from '@/game/components/HungerMeter';
 import { TasksModal } from '@/game/components/TasksModal';
 import { showGameDialog } from '@/game/services/dialogService';
 import { useGameStore } from '@/game/store/gameStore';
 import { fontFamily } from '@/ui/theme';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 function SettingsGlyph() {
   return (
@@ -67,7 +67,7 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  layer: { ...StyleSheet.absoluteFillObject, zIndex: 20, paddingHorizontal: 16 },
+  layer: { ...StyleSheet.absoluteFill, zIndex: 20, paddingHorizontal: 16 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   leftGroup: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   levelBadge: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center' },
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   fire: { width: 42, height: 42 },
   fireText: { position: 'absolute', fontFamily: fontFamily.bold, color: '#fff', fontSize: 14, top: 17 },
   settings: { width: 50, height: 50, alignItems: 'center', justifyContent: 'center' },
-  side: { position: 'absolute', right: 16, top: '46.5%', gap: 8, alignItems: 'center' },
+  side: { position: 'absolute', right: 16, top: '49%', gap: 8, alignItems: 'center' },
   tasks: { width: 54, height: 54, borderRadius: 11, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#534122', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 },
   taskSquare: { width: 30, height: 30, borderRadius: 4, backgroundColor: '#2A1105', alignItems: 'center', justifyContent: 'center' },
   taskIcon: { fontFamily: fontFamily.bold, fontSize: 20, color: '#fff', lineHeight: 23 },

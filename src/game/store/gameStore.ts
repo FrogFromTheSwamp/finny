@@ -31,11 +31,11 @@ type GameState = {
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const test = TEST_DATA_ENABLED ? makeTestGameData() : null;
 const initial = {
-  coins: test?.coins ?? 75,
+  coins: test?.coins ?? 0,
   level: test?.level ?? 1,
-  streakDays: test?.streakDays ?? 1,
+  streakDays: test?.streakDays ?? 0,
   hunger: test?.hunger ?? 58,
-  inventory: test?.inventory ?? ({ apple: 1 } as Inventory),
+  inventory: test?.inventory ?? ({ } as Inventory),
   shopSelection: test?.shopSelection ?? [],
   lastRewardDate: '',
   taskRewardsClaimed: [] as string[],

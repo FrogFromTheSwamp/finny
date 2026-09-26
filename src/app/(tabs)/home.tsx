@@ -31,9 +31,6 @@ export default function HomeScreen() {
       <View style={styles.petArea}>
         <PetSprite color={color} onPress={() => showGameDialog(`Привет! Я ${petName}. Если хочешь, покорми меня на вкладке «Еда» или выбери продукты в магазине.`, { title: petName })} />
       </View>
-      {/* <Pressable style={styles.rewardShortcut} onPress={() => setRewardOpen(true)}>
-        <Text style={styles.rewardEmoji}>🔥</Text><Text style={styles.rewardText}>Награда</Text>
-      </Pressable> */}
       <DailyRewardModal visible={rewardOpen} onClose={() => setRewardOpen(false)} />
     </View>
   );

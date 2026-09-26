@@ -24,6 +24,7 @@ export function BackgroundScreen({ source, children, contentStyle }: Props) {
       <KeyboardAvoidingView
         style={styles.safe}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={20}
       >
         <SafeAreaView style={styles.safe}>
           <SafeAreaView edges={['bottom']} style={[styles.content, contentStyle]}>

@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { FOOD_BY_ID, type FoodId } from '@/game/catalog';
 import { makeTestGameData, TEST_DATA_ENABLED, TEST_DATA_SEED, TEST_DATA_SESSION } from '@/game/testData';
+import { useEffect, useState } from 'react';
 
 type Inventory = Partial<Record<FoodId, number>>;
 
@@ -41,6 +42,18 @@ const initial = {
   taskRewardsClaimed: [] as string[],
   dailyActivity: { date: todayKey(), fed: 0, purchased: 0 },
 };
+
+export function useGameHydrated() {
+  const [hydrated, setHydrated] = useState(useGameStore.persist.hasHydrated());
+
+  useEffect(() => {
+    const unsubscribe = useGameStore.persist.onFinishHydration(() => setHydrated(true));
+    setHydrated(useGameStore.persist.hasHydrated());
+    return unsubscribe;
+  }, []);
+
+  return hydrated;
+}
 
 export const useGameStore = create<GameState>()(
   persist(

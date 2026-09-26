@@ -1,4 +1,5 @@
 import { useProfileHydrated, useProfileStore } from "@/store/profileStore";
+import { useGameHydrated } from "@/game/store/gameStore";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -14,6 +15,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const hydrated = useProfileHydrated();
+  const gameHydrated = useGameHydrated();
   const onboardingDone = useProfileStore((state) => state.onboardingDone);
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -22,7 +24,7 @@ export default function RootLayout() {
     Inter_700Bold,
   });
 
-  const ready = hydrated && fontsLoaded;
+  const ready = hydrated && gameHydrated && fontsLoaded;
 
   useEffect(() => {
     if (ready) {

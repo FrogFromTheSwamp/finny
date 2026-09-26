@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    top: "53%",
+    top: "54%",
     alignItems: "center",
   },
   plateArea: {

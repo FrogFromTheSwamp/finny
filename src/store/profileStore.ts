@@ -1,31 +1,43 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState } from 'react';
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect, useState } from "react";
+import { create } from "zustand";
+import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { PetColorId } from '@/content/petColors';
-import { TEST_DATA_ENABLED, TEST_DATA_SEED, TEST_DATA_SESSION, TEST_PROFILE } from '@/game/testData';
+import type { PetColorId } from "@/content/petColors";
+import {
+  TEST_DATA_ENABLED,
+  TEST_DATA_SEED,
+  TEST_DATA_SESSION,
+  TEST_PROFILE,
+} from "@/game/testData";
 
 type ProfileState = {
   playerName: string;
   petName: string;
-  petColorId: PetColorId | '';
+  petColorId: PetColorId | "";
   onboardingDone: boolean;
+  tutorialFeedDone: boolean;
 
   setPlayerName: (name: string) => void;
   setPetColor: (colorId: PetColorId) => void;
   completeOnboarding: (petName: string) => void;
   resetProfile: () => void;
+  completeTutorialFeed: () => void;
 };
 
 const initialData: Pick<
   ProfileState,
-  'playerName' | 'petName' | 'petColorId' | 'onboardingDone'
+  | "playerName"
+  | "petName"
+  | "petColorId"
+  | "onboardingDone"
+  | "tutorialFeedDone"
 > = {
-  playerName: TEST_DATA_ENABLED ? TEST_PROFILE.playerName : '',
-  petName: TEST_DATA_ENABLED ? TEST_PROFILE.petName : '',
-  petColorId: TEST_DATA_ENABLED ? TEST_PROFILE.petColorId : '',
+  playerName: TEST_DATA_ENABLED ? TEST_PROFILE.playerName : "",
+  petName: TEST_DATA_ENABLED ? TEST_PROFILE.petName : "",
+  petColorId: TEST_DATA_ENABLED ? TEST_PROFILE.petColorId : "",
   onboardingDone: TEST_DATA_ENABLED,
+  tutorialFeedDone: TEST_DATA_ENABLED,
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -43,11 +55,15 @@ export const useProfileStore = create<ProfileState>()(
           onboardingDone: true,
         }),
 
+      completeTutorialFeed: () => set({ tutorialFeedDone: true }),
+
       resetProfile: () => set(initialData),
     }),
 
     {
-      name: TEST_DATA_ENABLED ? `finny-profile-test-${TEST_DATA_SEED}-${TEST_DATA_SESSION}` : 'finny-profile',
+      name: TEST_DATA_ENABLED
+        ? `finny-profile-test-${TEST_DATA_SEED}-${TEST_DATA_SESSION}`
+        : "finny-profile",
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
     },
@@ -60,14 +76,11 @@ export function useProfileHydrated() {
   );
 
   useEffect(() => {
-    const unsubscribe =
-      useProfileStore.persist.onFinishHydration(() =>
-        setHydrated(true),
-      );
-
-    setHydrated(
-      useProfileStore.persist.hasHydrated(),
+    const unsubscribe = useProfileStore.persist.onFinishHydration(() =>
+      setHydrated(true),
     );
+
+    setHydrated(useProfileStore.persist.hasHydrated());
 
     return unsubscribe;
   }, []);

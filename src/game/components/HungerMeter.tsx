@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import Subtract from '@/assets/symbols/Subtract.svg';
 
 function CookieIcon() {
   return (
@@ -18,7 +19,7 @@ export function HungerMeter({ value }: { value: number }) {
   return (
     <View style={styles.shell} accessibilityLabel={`Сытость ${Math.round(value)} процентов`}>
       <View style={styles.track}><View style={[styles.fill, { height: `${percent}%` }]} /></View>
-      <View style={styles.cookie}><CookieIcon /></View>
+      <View style={styles.cookie}><Subtract  /></View>
     </View>
   );
 }
@@ -26,6 +27,6 @@ export function HungerMeter({ value }: { value: number }) {
 const styles = StyleSheet.create({
   shell: { width: 54, height: 171, borderRadius: 11, backgroundColor: '#fff', borderWidth: 1, borderColor: '#BFB5AA', paddingTop: 7, alignItems: 'center', shadowColor: '#534122', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.7, shadowRadius: 0, elevation: 4 },
   track: { width: 37, height: 126, borderRadius: 3, borderWidth: 3, borderColor: '#31581B', backgroundColor: '#E7E1D8', overflow: 'hidden', justifyContent: 'flex-end' },
-  fill: { width: '100%', backgroundColor: '#2E6C0C' },
+  fill: { width: '100%', backgroundColor: '#316309' },
   cookie: { height: 34, alignItems: 'center', justifyContent: 'center' },
 });

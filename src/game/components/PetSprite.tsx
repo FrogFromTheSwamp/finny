@@ -28,6 +28,6 @@ export function PetSprite({ color, isEating = false, onPress, style }: Props) {
   );
 }
 const styles = StyleSheet.create({
-  wrap: { width: 205, height: 170, alignItems: 'center', justifyContent: 'center' },
-  image: { width: '100%', height: '100%' },
+  wrap: { width: '80%', height: 170, alignItems: 'center', justifyContent: 'center' },
+  image: { width: '70%', height: '70%' },
 });

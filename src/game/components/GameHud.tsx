@@ -9,6 +9,9 @@ import { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
+import TaskBook from '@/assets/symbols/TaskBook.svg';
+import Settings from '@/assets/symbols/Settings.svg'
+import Fire from '@/assets/symbols/Fire.svg';
 
 function SettingsGlyph() {
   return (
@@ -50,15 +53,15 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
         </View>
         <View style={styles.topTools}>
           <Pressable style={styles.fireButton} onPress={() => showGameDialog(`Серия входов: ${streak} дн. Заходи каждый день, чтобы сохранить огонёк.`, { title: 'Серия входов' })}>
-            <Image source={fire} style={styles.fire} resizeMode="contain" /><Text style={styles.fireText}>{streak}</Text>
+            <Fire style={styles.fire}/><Text style={styles.fireText}>{streak}</Text>
           </Pressable>
-          <Pressable style={styles.settings} onPress={() => router.push('/settings')} accessibilityLabel="Настройки"><SettingsGlyph /></Pressable>
+          <Pressable style={styles.settings} onPress={() => router.push('/settings')} accessibilityLabel="Настройки"><Settings /></Pressable>
         </View>
       </View>
       {showHunger ? (
         <View style={styles.side}>
           <HungerMeter value={hunger} />
-          <Pressable style={styles.tasks} onPress={() => setTasksOpen(true)} accessibilityLabel="Задания"><View style={styles.taskSquare}><Text style={styles.taskIcon}>✓</Text></View></Pressable>
+          <Pressable style={styles.tasks} onPress={() => setTasksOpen(true)} accessibilityLabel="Задания"><TaskBook width='40'></TaskBook></Pressable>
         </View>
       ) : null}
       <TasksModal visible={tasksOpen} onClose={() => setTasksOpen(false)} />
@@ -80,7 +83,7 @@ const styles = StyleSheet.create({
   fire: { width: 42, height: 42 },
   fireText: { position: 'absolute', fontFamily: fontFamily.bold, color: '#fff', fontSize: 14, top: 17 },
   settings: { width: 50, height: 50, alignItems: 'center', justifyContent: 'center' },
-  side: { position: 'absolute', right: 16, top: '49%', gap: 8, alignItems: 'center' },
+  side: { position: 'absolute', right: 16, top: '40%', gap: 8, alignItems: 'center' },
   tasks: { width: 54, height: 54, borderRadius: 11, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', shadowColor: '#534122', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 1, shadowRadius: 0, elevation: 4 },
   taskSquare: { width: 30, height: 30, borderRadius: 4, backgroundColor: '#2A1105', alignItems: 'center', justifyContent: 'center' },
   taskIcon: { fontFamily: fontFamily.bold, fontSize: 20, color: '#fff', lineHeight: 23 },

@@ -1,5 +1,2 @@
-import { PlaceholderScreen } from '@/ui/PlaceholderScreen';
-
-export default function BudgetScreen() {
-  return <PlaceholderScreen title="План бюджета" />;
-}
+import { Redirect } from 'expo-router';
+export default function BudgetLegacyRoute(){ return <Redirect href="/budget-plan"/>; }

@@ -54,6 +54,13 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="glossary" />
         <Stack.Screen name="parent" />
+        <Stack.Screen name="lesson/[id]" />
+        <Stack.Screen name="lesson-complete" />
+        <Stack.Screen name="chapter-complete" />
+        <Stack.Screen name="goal-editor" />
+        <Stack.Screen name="goal-detail" />
+        <Stack.Screen name="budget-plan" />
+        <Stack.Screen name="history" />
       </Stack.Protected>
     </Stack>
   );

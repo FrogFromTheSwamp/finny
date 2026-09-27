@@ -1,5 +1,7 @@
-import { PlaceholderScreen } from '@/ui/PlaceholderScreen';
-
-export default function GlossaryScreen() {
-  return <PlaceholderScreen title="Справочник" />;
-}
+import { fontFamily } from '@/ui/theme';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+const TERMS=[['Бюджет','План: сколько денег есть и на что их потратить.'],['Обязательные расходы','То, без чего трудно обойтись: еда, дорога, учёба.'],['Желания','Покупки, которые приятно иметь, но обычно можно отложить.'],['Сбережения','Деньги, которые не тратят сейчас, а сохраняют на будущее.'],['Финансовая цель','Конкретная покупка с известной суммой и планом накопления.'],['Баланс','Сколько денег сейчас доступно.'],['Сдача','Разница между тем, сколько заплатили, и ценой покупки.'],['PIN-код','Секретный код карты. Его нельзя сообщать другим людям.']];
+export default function GlossaryScreen(){const router=useRouter();return <SafeAreaView style={styles.root}><View style={styles.header}><Pressable onPress={()=>router.back()}><Text style={styles.back}>‹</Text></Pressable><Text style={styles.title}>Справочник</Text></View><ScrollView contentContainerStyle={styles.content}>{TERMS.map(([t,d])=><View key={t} style={styles.card}><Text style={styles.term}>{t}</Text><Text style={styles.desc}>{d}</Text></View>)}</ScrollView></SafeAreaView>}
+const styles=StyleSheet.create({root:{flex:1,backgroundColor:'#F5F4F2'},header:{height:58,flexDirection:'row',alignItems:'center',paddingHorizontal:18},back:{fontSize:38,width:35,color:'#2A180E'},title:{fontFamily:fontFamily.bold,fontSize:20,color:'#2A180E'},content:{padding:18,paddingBottom:35},card:{backgroundColor:'#fff',borderRadius:13,padding:15,marginBottom:9,borderWidth:1,borderColor:'#E2DEDB'},term:{fontFamily:fontFamily.bold,color:'#2A180E',fontSize:15},desc:{fontFamily:fontFamily.medium,color:'#6F625B',lineHeight:20,marginTop:5}});

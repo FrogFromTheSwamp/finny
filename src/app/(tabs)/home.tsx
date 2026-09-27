@@ -17,6 +17,8 @@ export default function HomeScreen() {
   const tutorialFeedDone = useProfileStore((s) => s.tutorialFeedDone);
   const completeTutorialFeed = useProfileStore((s) => s.completeTutorialFeed);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
+  const milestonesSeen = useGameStore((s) => s.milestonesSeen);
+  const markMilestoneSeen = useGameStore((s) => s.markMilestoneSeen);
   const [rewardOpen, setRewardOpen] = useState(false);
   const [showTutorialSpeech, setShowTutorialSpeech] = useState(false);
 
@@ -35,6 +37,15 @@ export default function HomeScreen() {
     // (которое сразу меняет canClaim) может неожиданно снова сработать этот эффект.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!tutorialFeedDone || milestonesSeen.includes('learning-unlocked')) return;
+    const timer = setTimeout(() => {
+      markMilestoneSeen('learning-unlocked');
+      showGameDialog('Теперь можно проходить уроки на вкладке «Учёба». За уроки ты получаешь финники и открываешь новые возможности.', { title: 'Учёба открыта!' });
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [tutorialFeedDone, milestonesSeen, markMilestoneSeen]);
 
   const handleRewardClose = () => {
     setRewardOpen(false);

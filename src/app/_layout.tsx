@@ -1,11 +1,11 @@
-import { useProfileHydrated, useProfileStore } from "@/store/profileStore";
 import { useGameHydrated } from "@/game/store/gameStore";
+import { useProfileHydrated, useProfileStore } from "@/store/profileStore";
 import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    useFonts,
 } from "@expo-google-fonts/inter";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -61,6 +61,7 @@ export default function RootLayout() {
         <Stack.Screen name="goal-detail" />
         <Stack.Screen name="budget-plan" />
         <Stack.Screen name="history" />
+        <Stack.Screen name="food-shop" />
       </Stack.Protected>
     </Stack>
   );

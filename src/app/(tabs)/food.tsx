@@ -1,4 +1,5 @@
 import kitchen from "@/assets/game/rooms/kitchen.png";
+import Plus from "@/assets/symbols/plus.svg";
 import type { PetColorId } from "@/content/petColors";
 import { FOOD_BY_ID, FOOD_ITEMS, type FoodId } from "@/game/catalog";
 import { GameHud } from "@/game/components/GameHud";
@@ -7,6 +8,7 @@ import { showGameDialog } from "@/game/services/dialogService";
 import { useGameStore } from "@/game/store/gameStore";
 import { useProfileStore } from "@/store/profileStore";
 import { fontFamily } from "@/ui/theme";
+import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -18,8 +20,6 @@ import {
   Text,
   View,
 } from "react-native";
-import Plus from '@/assets/symbols/plus.svg'
-import { router } from "expo-router";
 
 export default function FoodScreen() {
   const inventory = useGameStore((s) => s.inventory);
@@ -141,7 +141,7 @@ export default function FoodScreen() {
             })}
           </ScrollView>
         ) : (
-          <Pressable onPress={() => {router.push('/(tabs)/shop')}}>
+          <Pressable onPress={() => router.push("/food-shop")}>
             <Plus />
           </Pressable>
         )}
@@ -183,8 +183,8 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     bottom: 80,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 10,
   },
   panelTitle: {

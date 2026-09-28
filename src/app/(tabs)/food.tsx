@@ -12,13 +12,10 @@ import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
-  Image,
   ImageBackground,
   Pressable,
-  ScrollView,
   StyleSheet,
-  Text,
-  View,
+  View
 } from "react-native";
 
 export default function FoodScreen() {
@@ -121,15 +118,13 @@ export default function FoodScreen() {
             resizeMode="contain"
           />
         </Pressable>
-      ) :
-      (
+      ) : (
         <View style={styles.inventoryPanel}>
           <Pressable onPress={() => router.push("/food-shop")}>
             <Plus />
           </Pressable>
         </View>
-        ) 
-      }
+      )}
     </View>
   );
 }
@@ -161,7 +156,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 12,
     right: 12,
-    bottom: 80,
+    bottom: 120,
     justifyContent: "center",
     alignItems: "center",
     padding: 10,

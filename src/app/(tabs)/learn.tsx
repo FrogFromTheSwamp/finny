@@ -72,7 +72,7 @@ export default function LearnScreen() {
             <View key={chapter.id}>
               {isActiveHeader ? (
                 <View style={styles.chapterBox}>
-                  <View>
+                  <View style={{width: '80%'}}>
                     <Text style={styles.chapterBoxLabel}>Глава {ci + 1}</Text>
                     <Text style={styles.chapterBoxTitle}>{chapter.title}</Text>
                   </View>

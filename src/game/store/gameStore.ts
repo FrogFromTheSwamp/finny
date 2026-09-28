@@ -6,11 +6,12 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { GoalTemplateId } from "@/features/goals/catalog";
 import { FOOD_BY_ID, type FoodId } from "@/game/catalog";
 import {
-    makeTestGameData,
-    TEST_DATA_ENABLED,
-    TEST_DATA_SEED,
-    TEST_DATA_SESSION,
+  makeTestGameData,
+  TEST_DATA_ENABLED,
+  TEST_DATA_SEED,
+  TEST_DATA_SESSION,
 } from "@/game/testData";
+import { HAT_BY_ID, type HatId } from "@/game/wardrobe";
 
 type Inventory = Partial<Record<FoodId, number>>;
 export type BudgetPlan = { need: number; want: number; save: number };
@@ -34,6 +35,7 @@ export type MoneyTransaction = {
     | "goal-deposit"
     | "goal-withdraw"
     | "goal-purchase"
+    | "wardrobe"
     | "other";
 };
 
@@ -57,6 +59,8 @@ type GameState = {
   goals: GoalRecord[];
   transactions: MoneyTransaction[];
   milestonesSeen: string[];
+  equippedHat: HatId;
+  ownedHats: HatId[];
   addCoins: (amount: number, title?: string) => void;
   setHunger: (value: number) => void;
   feed: (foodId: FoodId) => boolean;
@@ -91,6 +95,8 @@ type GameState = {
   purchaseGoal: (goalId: string) => boolean;
   removeGoal: (goalId: string) => void;
   markMilestoneSeen: (id: string) => void;
+  equipHat: (hatId: HatId) => void;
+  purchaseHat: (hatId: HatId) => boolean;
   resetGame: () => void;
 };
 
@@ -127,6 +133,8 @@ const initial = {
   goals: [] as GoalRecord[],
   transactions: [] as MoneyTransaction[],
   milestonesSeen: [] as string[],
+  equippedHat: "none" as HatId,
+  ownedHats: ["none"] as HatId[],
 };
 
 export function useGameHydrated() {
@@ -450,13 +458,35 @@ export const useGameStore = create<GameState>()(
             ? state.milestonesSeen
             : [...state.milestonesSeen, id],
         })),
+      equipHat: (hatId) =>
+        set((state) =>
+          state.ownedHats.includes(hatId) ? { equippedHat: hatId } : state,
+        ),
+      purchaseHat: (hatId) => {
+        if (get().ownedHats.includes(hatId)) {
+          set({ equippedHat: hatId });
+          return true;
+        }
+        const hat = HAT_BY_ID[hatId];
+        if (!hat || get().coins < hat.price) return false;
+        set((state) => ({
+          coins: state.coins - hat.price,
+          equippedHat: hatId,
+          ownedHats: [...state.ownedHats, hatId],
+          transactions: [
+            tx(`Гардероб · ${hat.name}`, -hat.price, "wardrobe"),
+            ...state.transactions,
+          ].slice(0, 100),
+        }));
+        return true;
+      },
       resetGame: () => set(initial),
     }),
     {
       name: TEST_DATA_ENABLED
         ? `finny-game-test-${TEST_DATA_SEED}-${TEST_DATA_SESSION}`
         : "finny-game",
-      version: 2,
+      version: 4,
       storage: createJSONStorage(() => AsyncStorage),
       migrate: (persisted: any) => ({
         ...initial,
@@ -471,6 +501,10 @@ export const useGameStore = create<GameState>()(
         claimedChapterRewards: persisted?.claimedChapterRewards ?? [],
         milestonesSeen: persisted?.milestonesSeen ?? [],
         xp: persisted?.xp ?? Math.max(0, ((persisted?.level ?? 1) - 1) * 100),
+        ownedHats: persisted?.ownedHats ?? ["none"],
+        equippedHat: persisted?.ownedHats?.includes(persisted?.equippedHat)
+          ? persisted.equippedHat
+          : "none",
       }),
     },
   ),

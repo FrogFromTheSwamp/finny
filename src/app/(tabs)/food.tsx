@@ -3,7 +3,7 @@ import Plus from "@/assets/symbols/plus.svg";
 import type { PetColorId } from "@/content/petColors";
 import { FOOD_BY_ID, FOOD_ITEMS, type FoodId } from "@/game/catalog";
 import { GameHud } from "@/game/components/GameHud";
-import { PetSprite } from "@/game/components/PetSprite";
+import { PetWithHat } from "@/game/components/PetWithHat";
 import { showGameDialog } from "@/game/services/dialogService";
 import { useGameStore } from "@/game/store/gameStore";
 import { useProfileStore } from "@/store/profileStore";
@@ -15,7 +15,7 @@ import {
   ImageBackground,
   Pressable,
   StyleSheet,
-  View
+  View,
 } from "react-native";
 
 export default function FoodScreen() {
@@ -95,7 +95,7 @@ export default function FoodScreen() {
       />
       <GameHud />
       <View style={styles.petArea}>
-        <PetSprite color={color} isEating={mouthOpen} />
+        <PetWithHat color={color} isEating={mouthOpen} />
       </View>
       {selectedItem ? (
         <Pressable

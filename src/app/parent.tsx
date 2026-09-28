@@ -26,6 +26,7 @@ export default function ParentScreen() {
   const accuracy = useGameStore((s) => s.lessonAccuracy);
   const allGoals = useGameStore((s) => s.goals);
   const goals = allGoals.filter((goal) => !goal.purchasedAt);
+  const piggyBalance = useGameStore((s) => s.piggy);
   const resetGame = useGameStore((s) => s.resetGame);
 
   useEffect(() => {
@@ -128,13 +129,13 @@ export default function ParentScreen() {
         <Text style={styles.sectionTitle}>Цели ребёнка</Text>
         {goals.length ? goals.map((goal) => {
           const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
-          const percent = Math.min(100, Math.round((goal.saved / goal.target) * 100));
+          const percent = Math.min(100, Math.round((piggyBalance / goal.target) * 100));
           return (
             <View key={goal.id} style={styles.goalCard}>
               <Image source={template.image} style={styles.goalImage} resizeMode="contain" />
               <View style={styles.goalCopy}>
                 <Text style={styles.goalName}>{goal.name}</Text>
-                <Text style={styles.goalValue}>{goal.saved} из {goal.target} ●</Text>
+                <Text style={styles.goalValue}>Цена {goal.target} ● · {piggyBalance >= goal.target ? 'хватит в копилке' : `в копилке ${piggyBalance}`}</Text>
                 <View style={styles.progressTrack}><View style={[styles.progressFill, { width: `${percent}%` }]} /></View>
               </View>
             </View>

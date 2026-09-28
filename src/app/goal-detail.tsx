@@ -6,8 +6,8 @@ import { useGameStore } from '@/game/store/gameStore';
 import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Image, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Alert, Animated, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function GoalDetailScreen() {
@@ -15,12 +15,9 @@ export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const goal = useGameStore((s) => s.goals.find((g) => g.id === String(id)));
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
-  const coins = useGameStore((s) => s.coins);
-  const deposit = useGameStore((s) => s.depositGoal);
-  const withdraw = useGameStore((s) => s.withdrawGoal);
+  const piggyBalance = useGameStore((s) => s.piggy);
   const purchase = useGameStore((s) => s.purchaseGoal);
   const remove = useGameStore((s) => s.removeGoal);
-  const [amount, setAmount] = useState('5');
   const shake = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -37,16 +34,14 @@ export default function GoalDetailScreen() {
 
   if (!goal) return <SafeAreaView style={styles.root}><Text>Цель не найдена</Text></SafeAreaView>;
   const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
-  const pct = Math.min(100, Math.round(goal.saved / goal.target * 100));
-  const value = Math.max(1, Number(amount) || 0);
-  const doDeposit = () => { if (!deposit(goal.id, value)) Alert.alert('Не получилось', 'Проверь баланс или сумму пополнения.'); };
-  const doWithdraw = () => { if (!withdraw(goal.id, value)) Alert.alert('Не получилось', 'Нельзя снять больше, чем уже накоплено.'); };
-  const doPurchase = () => { if (!purchase(goal.id)) Alert.alert('Пока рано', 'Сначала накопи полную сумму.'); };
+  const affordable = piggyBalance >= goal.target;
+  const pct = Math.min(100, Math.round((piggyBalance / goal.target) * 100));
+  const doPurchase = () => { if (!purchase(goal.id)) Alert.alert('Пока рано', 'В копилке не хватает монет на эту покупку.'); };
 
   if (goal.purchasedAt) return <SafeAreaView style={styles.root}>
     <Pressable onPress={() => router.back()}><Text style={styles.back}>‹</Text></Pressable>
     <Text style={styles.successTitle}>Цель достигнута!</Text>
-    <Text style={styles.successText}>Ты накопил на «{goal.name}».</Text>
+    <Text style={styles.successText}>«{goal.name}» куплена из копилки.</Text>
     <View style={styles.pet}><PetWithHat color={color} emotion="happy" /></View>
     <Animated.Image source={template.image} style={[styles.purchasedImage, { transform: [{ rotate: shake.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-7deg', '0deg', '7deg'] }) }] }]} resizeMode="contain"/>
     <View style={styles.bottom}><FinnyButton label="Готово" onPress={() => router.replace('/(tabs)/goals')}/></View>
@@ -57,15 +52,11 @@ export default function GoalDetailScreen() {
     <View style={styles.content}>
       <Image source={template.image} style={styles.hero} resizeMode="contain"/>
       <Text style={styles.goalName}>{goal.name}</Text>
-      <Text style={styles.money}>{goal.saved} из {goal.target} ●</Text>
+      <Text style={styles.money}>Цена {goal.target} ●</Text>
       <View style={styles.progress}><View style={[styles.fill, { width: `${pct}%` }]} /></View>
-      <Text style={styles.hint}>{pct}% · на общем балансе: {coins} ●</Text>
-      <Text style={styles.label}>Сумма операции</Text>
-      <TextInput keyboardType="number-pad" value={amount} onChangeText={setAmount} style={styles.input}/>
-      <View style={styles.quick}>{[5, 10, 25].map((v) => <Pressable key={v} onPress={() => setAmount(String(v))} style={styles.quickBtn}><Text style={styles.quickText}>{v}</Text></Pressable>)}</View>
-      <View style={styles.actions}><Pressable onPress={doDeposit} style={styles.action}><Text style={styles.actionText}>＋ Пополнить</Text></Pressable><Pressable onPress={doWithdraw} style={styles.action}><Text style={styles.actionText}>− Снять</Text></Pressable></View>
-      {goal.saved >= goal.target ? <FinnyButton label="Купить цель" onPress={doPurchase} style={styles.buy}/> : <Text style={styles.remaining}>Осталось накопить {goal.target - goal.saved} ●</Text>}
-      <Pressable onPress={() => Alert.alert('Удалить цель?', 'Накопленные монеты вернутся только если сначала снять их.', [{ text: 'Отмена', style: 'cancel' }, { text: 'Удалить', style: 'destructive', onPress: () => { remove(goal.id); router.back(); } }])}><Text style={styles.delete}>Удалить цель</Text></Pressable>
+      <Text style={styles.hint}>В копилке {piggyBalance} ●. Деньги цели не принадлежат: это общий запас, из которого можно купить товар.</Text>
+      {affordable ? <FinnyButton label="Купить из копилки" onPress={doPurchase} style={styles.buy}/> : <Text style={styles.remaining}>Не хватает {goal.target - piggyBalance} ●</Text>}
+      <Pressable onPress={() => Alert.alert('Удалить цель?', 'Товар пропадёт из списка. Деньги в копилке останутся.', [{ text: 'Отмена', style: 'cancel' }, { text: 'Удалить', style: 'destructive', onPress: () => { remove(goal.id); router.back(); } }])}><Text style={styles.delete}>Удалить цель</Text></Pressable>
     </View>
   </SafeAreaView>;
 }

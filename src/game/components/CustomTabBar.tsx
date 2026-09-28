@@ -37,7 +37,7 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
               }}
               style={styles.hitArea}
             >
-              {(tutorialStage === 2 && routeName === 'food') || (tutorialStage === 6 && routeName === 'shop') ? (
+              {(((tutorialStage === 2 && routeName === 'food') || (tutorialStage === 6 && routeName === 'shop')) && activeName !== routeName) ? (
                 <TutorialHand style={styles.tutorialHand} rotate="-18deg" />
               ) : null}
             </Pressable>

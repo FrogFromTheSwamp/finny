@@ -6,7 +6,7 @@ import { useGameStore } from '@/game/store/gameStore';
 import { fontFamily } from '@/ui/theme';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function GoalsScreen() {
   const router = useRouter();
@@ -18,12 +18,18 @@ export default function GoalsScreen() {
   const milestonesSeen = useGameStore((s) => s.milestonesSeen);
   const markMilestoneSeen = useGameStore((s) => s.markMilestoneSeen);
   const purchaseGoal = useGameStore((s) => s.purchaseGoal);
+  const coins = useGameStore((s) => s.coins);
+  const piggyBalance = useGameStore((s) => s.piggy);
+  const depositPiggy = useGameStore((s) => s.depositPiggy);
+  const withdrawPiggy = useGameStore((s) => s.withdrawPiggy);
   const [firstGoalOpen, setFirstGoalOpen] = useState(false);
   const [goalReadyOpen, setGoalReadyOpen] = useState(false);
+  const [transfer, setTransfer] = useState<'in' | 'out' | null>(null);
+  const [amountText, setAmountText] = useState('');
+  const [transferError, setTransferError] = useState('');
   const activeGoals = goals.filter((g) => !g.purchasedAt);
-  const totalSaved = activeGoals.reduce((sum, g) => sum + g.saved, 0);
   const planUnlocked = completedChapters.includes('budget');
-  const readyHatGoal = useMemo(() => activeGoals.find((g) => g.templateId === 'party-hat' && g.saved >= g.target), [activeGoals]);
+  const readyHatGoal = useMemo(() => activeGoals.find((g) => g.templateId === 'party-hat' && piggyBalance >= g.target), [activeGoals, piggyBalance]);
 
   useEffect(() => {
     if (tutorialStage === 7 && goals.some((g) => g.templateId === 'party-hat')) setFirstGoalOpen(true);
@@ -39,10 +45,20 @@ export default function GoalsScreen() {
     router.push({ pathname: '/lesson/[id]', params: { id: 'budget-1' } });
   };
 
-  const openGoalAction = (kind: 'deposit' | 'withdraw') => {
-    const first = activeGoals[0];
-    if (!first) return router.push('/goal-editor');
-    router.push({ pathname: '/goal-detail', params: { id: first.id, action: kind } });
+  const openTransfer = (kind: 'in' | 'out') => {
+    setTransfer(kind);
+    setAmountText('');
+    setTransferError('');
+  };
+
+  const submitTransfer = () => {
+    const value = Math.round(Number(amountText));
+    const ok = transfer === 'in' ? depositPiggy(value) : transfer === 'out' ? withdrawPiggy(value) : false;
+    if (!ok) {
+      setTransferError(transfer === 'in' ? 'На счёте нет такой суммы.' : 'В копилке нет такой суммы.');
+      return;
+    }
+    setTransfer(null);
   };
 
   const tryHat = () => {
@@ -60,10 +76,11 @@ export default function GoalsScreen() {
         <View style={styles.walletCard}>
           <Image source={piggy} style={styles.piggy} resizeMode="contain" />
           <View style={styles.walletRight}>
-            <Text style={styles.walletValue}>{totalSaved} <Text style={styles.coin}>●</Text></Text>
+            <Text style={styles.walletValue}>{piggyBalance} <Text style={styles.coin}>●</Text></Text>
+            <Text style={styles.walletAccount}>На счёте {coins} ●</Text>
             <View style={styles.walletActions}>
-              <Pressable style={styles.walletButton} onPress={() => openGoalAction('deposit')}><Text style={styles.walletButtonText}>↑ Пополнить</Text></Pressable>
-              <Pressable style={styles.walletButton} onPress={() => openGoalAction('withdraw')}><Text style={styles.walletButtonText}>↓ Снять</Text></Pressable>
+              <Pressable style={styles.walletButton} onPress={() => openTransfer('in')}><Text style={styles.walletButtonText}>↑ Пополнить</Text></Pressable>
+              <Pressable style={styles.walletButton} onPress={() => openTransfer('out')}><Text style={styles.walletButtonText}>↓ Снять</Text></Pressable>
             </View>
           </View>
         </View>
@@ -78,11 +95,12 @@ export default function GoalsScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
             {activeGoals.map((goal) => {
               const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
-              const pct = Math.min(100, Math.round((goal.saved / goal.target) * 100));
+              const affordable = piggyBalance >= goal.target;
+              const pct = Math.min(100, Math.round((piggyBalance / goal.target) * 100));
               return <Pressable key={goal.id} onPress={() => router.push({ pathname: '/goal-detail', params: { id: goal.id } })} style={styles.goalCard}>
                 <Image source={template.image} style={styles.goalImage} resizeMode="contain" />
-                <View style={styles.goalInfo}><Text style={styles.goalName} numberOfLines={2}>{goal.name}</Text><Text style={styles.goalMoney}>{goal.saved} из {goal.target} <Text style={styles.coin}>●</Text></Text><View style={styles.progress}><View style={[styles.progressFill, { width: `${pct}%` }]} /></View></View>
-                <View style={styles.goalPlus}><Text style={styles.goalPlusText}>+</Text></View>
+                <View style={styles.goalInfo}><Text style={styles.goalName} numberOfLines={2}>{goal.name}</Text><Text style={styles.goalMoney}>{goal.target} <Text style={styles.coin}>●</Text></Text><Text style={styles.goalStatus}>{affordable ? 'Можно купить из копилки' : `Не хватает ${goal.target - piggyBalance}`}</Text><View style={styles.progress}><View style={[styles.progressFill, { width: `${pct}%` }]} /></View></View>
+                <Text style={styles.chev}>›</Text>
               </Pressable>;
             })}
           </ScrollView>
@@ -100,7 +118,7 @@ export default function GoalsScreen() {
         <View style={styles.modalBackdrop}><View style={styles.modalCard}>
           <Image source={partyHat} style={styles.modalAsset} resizeMode="contain" />
           <Text style={styles.modalTitle}>Поздравляем, ты добавил свою первую цель!</Text>
-          <Text style={styles.modalText}>Давай выполним задание, чтобы накопить на неё?</Text>
+          <Text style={styles.modalText}>Заработай монеты и переведи их со счёта в копилку. Когда суммы хватит, цель можно купить сразу оттуда.</Text>
           <Pressable style={styles.modalButton} onPress={goToFirstLesson}><Text style={styles.modalButtonText}>Перейти к урокам</Text></Pressable>
         </View></View>
       </Modal>
@@ -108,9 +126,21 @@ export default function GoalsScreen() {
       <Modal visible={goalReadyOpen} transparent animationType="fade" onRequestClose={() => setGoalReadyOpen(false)}>
         <View style={styles.modalBackdrop}><View style={styles.modalCard}>
           <Image source={partyHat} style={styles.modalAsset} resizeMode="contain" />
-          <Text style={styles.modalTitle}>Поздравляем, ты накопил на колпак в точечку!</Text>
-          <Text style={styles.modalText}>Теперь ты можешь примерить его.</Text>
-          <Pressable style={styles.modalButton} onPress={tryHat}><Text style={styles.modalButtonText}>Перейти в гардероб</Text></Pressable>
+          <Text style={styles.modalTitle}>В копилке хватает на колпак в точечку!</Text>
+          <Text style={styles.modalText}>Покупка спишется из копилки, и колпак можно примерить.</Text>
+          <Pressable style={styles.modalButton} onPress={tryHat}><Text style={styles.modalButtonText}>Купить из копилки</Text></Pressable>
+        </View></View>
+      </Modal>
+
+      <Modal visible={transfer !== null} transparent animationType="fade" onRequestClose={() => setTransfer(null)}>
+        <View style={styles.modalBackdrop}><View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>{transfer === 'in' ? 'Пополнить копилку' : 'Снять из копилки'}</Text>
+          <Text style={styles.modalText}>{transfer === 'in' ? `Деньги уйдут со счёта. Сейчас там ${coins} ●.` : `Деньги вернутся на счёт. В копилке ${piggyBalance} ●.`}</Text>
+          <TextInput value={amountText} onChangeText={(value) => { setAmountText(value.replace(/\D/g, '')); setTransferError(''); }} keyboardType="number-pad" placeholder="Сумма" style={styles.transferInput} />
+          <Pressable onPress={() => { setAmountText(String(transfer === 'in' ? coins : piggyBalance)); setTransferError(''); }}><Text style={styles.transferAll}>Всю сумму</Text></Pressable>
+          {transferError ? <Text style={styles.transferError}>{transferError}</Text> : null}
+          <Pressable style={styles.modalButton} onPress={submitTransfer}><Text style={styles.modalButtonText}>{transfer === 'in' ? 'Перевести в копилку' : 'Вернуть на счёт'}</Text></Pressable>
+          <Pressable onPress={() => setTransfer(null)}><Text style={styles.transferCancel}>Отмена</Text></Pressable>
         </View></View>
       </Modal>
     </View>
@@ -125,6 +155,7 @@ const styles = StyleSheet.create({
   piggy: { width: 132, height: 126 },
   walletRight: { flex: 1, alignItems: 'center' },
   walletValue: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 30 },
+  walletAccount: { fontFamily: fontFamily.medium, color: '#D6E6F6', fontSize: 11, marginTop: 2 },
   coin: { color: '#F2A900' },
   walletActions: { flexDirection: 'row', gap: 7, marginTop: 12 },
   walletButton: { minHeight: 36, borderRadius: 10, backgroundColor: '#fff', paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
@@ -147,6 +178,7 @@ const styles = StyleSheet.create({
   goalInfo: { flex: 1, paddingHorizontal: 8 },
   goalName: { fontFamily: fontFamily.bold, fontSize: 14, color: '#2A1B13' },
   goalMoney: { fontFamily: fontFamily.semiBold, color: '#745B49', fontSize: 11, marginTop: 6 },
+  goalStatus: { fontFamily: fontFamily.medium, color: '#80736C', fontSize: 10, marginTop: 3 },
   progress: { height: 7, borderRadius: 4, backgroundColor: '#E6E1DD', marginTop: 8, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: '#F4A91D' },
   goalPlus: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#EFE6DF', alignItems: 'center', justifyContent: 'center' },
@@ -163,4 +195,8 @@ const styles = StyleSheet.create({
   modalText: { fontFamily: fontFamily.medium, fontSize: 14, lineHeight: 20, color: '#6F6259', textAlign: 'center', marginTop: 10 },
   modalButton: { width: '100%', minHeight: 52, borderRadius: 12, backgroundColor: '#3B1606', alignItems: 'center', justifyContent: 'center', marginTop: 20 },
   modalButtonText: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 14 },
+  transferInput: { width: '100%', height: 52, borderRadius: 12, borderWidth: 2, borderColor: '#C9C0BA', backgroundColor: '#fff', marginTop: 16, paddingHorizontal: 14, fontFamily: fontFamily.bold, fontSize: 20, color: '#2A160A' },
+  transferAll: { fontFamily: fontFamily.bold, color: '#5B2E1D', marginTop: 10 },
+  transferError: { fontFamily: fontFamily.medium, color: '#A14432', marginTop: 8 },
+  transferCancel: { fontFamily: fontFamily.bold, color: '#6D625B', marginTop: 14 },
 });

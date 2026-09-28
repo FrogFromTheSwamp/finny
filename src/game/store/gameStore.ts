@@ -514,7 +514,8 @@ export const useGameStore = create<GameState>()(
           ((persisted?.transactions?.length ?? 0) > 0 || (persisted?.completedLessons?.length ?? 0) > 0
             ? 8
             : 0),
-      }),
+        };
+      },
     },
   ),
 );

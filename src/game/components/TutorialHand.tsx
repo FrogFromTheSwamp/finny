@@ -2,7 +2,15 @@ import hand from '@/assets/library/ui/tap-hand.png';
 import { useEffect, useRef } from 'react';
 import { Animated, Image, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
-export function TutorialHand({ style, rotate = '0deg' }: { style?: StyleProp<ViewStyle>; rotate?: string }) {
+const TUTORIAL_HANDS_ENABLED = false;
+type TutorialHandProps = { style?: StyleProp<ViewStyle>; rotate?: string };
+
+export function TutorialHand(props: TutorialHandProps) {
+  if (!TUTORIAL_HANDS_ENABLED) return null;
+  return <AnimatedTutorialHand {...props} />;
+}
+
+function AnimatedTutorialHand({ style, rotate = '0deg' }: TutorialHandProps) {
   const bob = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     const loop = Animated.loop(

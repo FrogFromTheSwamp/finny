@@ -2,7 +2,6 @@ import wallet from '@/assets/library/learning/items/wallet.png';
 import { FinnyButton } from '@/components/FinnyButton';
 import type { PetColorId } from '@/content/petColors';
 import { BudgetDonut, PlanSliders } from '@/features/budget/BudgetControls';
-import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
 import { CHAPTER_BY_ID, type ChapterId } from '@/features/learning/content';
 import { PetWithHat } from '@/game/components/PetWithHat';
 import { useGameStore, type BudgetPlan } from '@/game/store/gameStore';
@@ -10,9 +9,8 @@ import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useShallow } from 'zustand/react/shallow';
 
 export default function ChapterCompleteScreen() {
   const router = useRouter();
@@ -27,8 +25,7 @@ export default function ChapterCompleteScreen() {
   const completedChapters = useGameStore((s) => s.completedChapters);
   const claimedChapterRewards = useGameStore((s) => s.claimedChapterRewards);
   const lessonAccuracy = useGameStore((s) => s.lessonAccuracy);
-  const goals = useGameStore(useShallow((s) => s.goals.filter((g) => !g.purchasedAt && g.saved < g.target)));
-  const depositGoal = useGameStore((s) => s.depositGoal);
+  const depositPiggy = useGameStore((s) => s.depositPiggy);
   const milestones = useGameStore((s) => s.milestonesSeen);
   const markSeen = useGameStore((s) => s.markMilestoneSeen);
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
@@ -39,7 +36,6 @@ export default function ChapterCompleteScreen() {
   const rewardClaimed = claimedChapterRewards.includes(chapterId);
   const [stage, setStage] = useState(0);
   const [plan, setPlan] = useState<BudgetPlan>(storedPlan);
-  const [selectedGoal, setSelectedGoal] = useState(goals[0]?.id ?? '');
   const [distributionBalance, setDistributionBalance] = useState(coins);
 
   if (!chapter) return null;
@@ -74,21 +70,7 @@ export default function ChapterCompleteScreen() {
 
   const saveDistribution = () => {
     savePlan(plan);
-    if (goals.length && savedPart > 0 && !alreadyDistributed) {
-      setStage(2);
-      return;
-    }
-    markSeen(distributionKey);
-    afterDistribution();
-  };
-
-  const applyGoalDistribution = () => {
-    if (selectedGoal && savedPart > 0) depositGoal(selectedGoal, savedPart);
-    markSeen(distributionKey);
-    afterDistribution();
-  };
-
-  const skipGoalDistribution = () => {
+    if (savedPart > 0 && !alreadyDistributed) depositPiggy(savedPart);
     markSeen(distributionKey);
     afterDistribution();
   };
@@ -98,15 +80,15 @@ export default function ChapterCompleteScreen() {
     finish();
   };
 
-  const distributionView = (dimmed = false) => (
-    <View style={dimmed ? styles.dimmed : undefined} pointerEvents={dimmed ? 'none' : 'auto'}>
+  const distributionView = () => (
+    <View>
       <Text style={styles.kicker}>Распределение бюджета</Text>
       <Text style={styles.title}>Распредели монеты так, как считаешь правильным</Text>
       <View style={styles.donut}>
         <BudgetDonut plan={plan} size={176} centerMain={`${distributionBalance}`} centerSub="монет" />
       </View>
       <PlanSliders plan={plan} onChange={setPlan} />
-      <Text style={styles.note}>Отметки 50 / 30 / 20 — ориентир. Сейчас в накопления попадёт примерно {savedPart} монет.</Text>
+      <Text style={styles.note}>Отметки 50 / 30 / 20 — ориентир. Часть «Отложу», {savedPart} монет, переведётся со счёта в копилку.</Text>
     </View>
   );
 
@@ -126,33 +108,11 @@ export default function ChapterCompleteScreen() {
               <View style={styles.stat}><Text style={styles.statLabel}>Опыт</Text><Text style={styles.statValue}>+25</Text></View>
               <View style={styles.stat}><Text style={styles.statLabel}>Точность</Text><Text style={styles.statValue}>{chapterAccuracy}%</Text></View>
             </View>
-            <Text style={styles.body}>{chapter.title} пройдена. Забери награду и реши, какую часть баланса оставить на нужное, желания и цели.</Text>
+            <Text style={styles.body}>{chapter.title} пройдена. Забери награду и реши, какую часть баланса оставить на нужное, желания и копилку.</Text>
           </>
         ) : null}
 
         {stage === 1 ? distributionView() : null}
-
-        {stage === 2 ? (
-          <View style={styles.distributionModalStage}>
-            {distributionView(true)}
-            <View style={styles.modalShade} />
-            <View style={styles.goalModal}>
-              <Text style={styles.goalModalTitle}>Ты отложил {savedPart} ● на цели</Text>
-              <Text style={styles.goalModalText}>Давай выберем, на какую цель отправить эти монеты.</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
-                {goals.map((goal) => (
-                  <Pressable key={goal.id} onPress={() => setSelectedGoal(goal.id)} style={[styles.goalCard, selectedGoal === goal.id && styles.goalCardOn]}>
-                    <Image source={GOAL_TEMPLATE_BY_ID[goal.templateId].image} style={styles.goalImage} resizeMode="contain" />
-                    <Text style={styles.goalName}>{goal.name}</Text>
-                    <Text style={styles.goalMoney}>{goal.saved}/{goal.target} ●</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-              <FinnyButton label="Выбрать" onPress={applyGoalDistribution} disabled={!selectedGoal} />
-              <Pressable onPress={skipGoalDistribution} hitSlop={10}><Text style={styles.later}>Позже</Text></Pressable>
-            </View>
-          </View>
-        ) : null}
 
         {stage === 4 ? (
           <>
@@ -166,14 +126,12 @@ export default function ChapterCompleteScreen() {
         ) : null}
       </ScrollView>
 
-      {stage !== 2 ? (
-        <View style={styles.bottom}>
-          <FinnyButton
-            label={stage === 0 ? (rewardClaimed ? 'Распределить бюджет' : 'Забрать финники') : stage === 1 ? 'Готово!' : 'Продолжить'}
-            onPress={stage === 0 ? claimAndOpenDistribution : stage === 1 ? saveDistribution : finishGrowth}
-          />
-        </View>
-      ) : null}
+      <View style={styles.bottom}>
+        <FinnyButton
+          label={stage === 0 ? (rewardClaimed ? 'Распределить бюджет' : 'Забрать финники') : stage === 1 ? 'Готово!' : 'Продолжить'}
+          onPress={stage === 0 ? claimAndOpenDistribution : stage === 1 ? saveDistribution : finishGrowth}
+        />
+      </View>
     </SafeAreaView>
   );
 }

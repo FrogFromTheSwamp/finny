@@ -18,7 +18,7 @@ export default function GoalEditorScreen() {
   return <SafeAreaView style={styles.root}>
     <View style={styles.header}><Pressable onPress={()=>router.back()}><Text style={styles.back}>‹</Text></Pressable><Text style={styles.title}>Добавить цель</Text></View>
     <ScrollView contentContainerStyle={styles.content}>
-      <Text style={styles.lead}>Что ты хочешь купить?</Text><Text style={styles.helper}>Выбери предмет. Сумму можно изменить под свою цель.</Text>
+      <Text style={styles.lead}>Что ты хочешь купить?</Text><Text style={styles.helper}>Это цена товара. Копилка общая: деньги туда переводятся со счёта, а покупка списывается из неё целиком.</Text>
       <View style={styles.grid}>{GOAL_TEMPLATES.map((item)=><Pressable key={item.id} onPress={()=>select(item.id)} style={[styles.card, selectedId===item.id && styles.cardOn]}><Image source={item.image} style={styles.image} resizeMode="contain"/><Text style={styles.name}>{item.name}</Text><Text style={styles.price}>{item.target} 🟡</Text></Pressable>)}</View>
       <Text style={styles.inputLabel}>Нужно накопить</Text><TextInput keyboardType="number-pad" value={targetText} onChangeText={setTargetText} style={styles.input}/>
     </ScrollView>

@@ -1,4 +1,5 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import closeIcon from '@/assets/library/ui/icons/close.png';
+import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGameStore } from '@/game/store/gameStore';
 import { showGameDialog } from '@/game/services/dialogService';
 import { fontFamily } from '@/ui/theme';
@@ -6,7 +7,13 @@ import { fontFamily } from '@/ui/theme';
 type Props = { visible: boolean; onClose: () => void };
 type Task = { id: string; title: string; reward: number; done: boolean };
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
+const todayKey = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 export function TasksModal({ visible, onClose }: Props) {
   const activity = useGameStore((s) => s.dailyActivity);
@@ -36,7 +43,7 @@ export function TasksModal({ visible, onClose }: Props) {
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
           <View style={styles.head}>
             <View><Text style={styles.title}>Задания на сегодня</Text><Text style={styles.subtitle}>Выполняй действия и забирай монетки</Text></View>
-            <Pressable style={styles.close} onPress={onClose}><Text style={styles.closeText}>×</Text></Pressable>
+            <Pressable style={styles.close} onPress={onClose} accessibilityLabel="Закрыть"><Image source={closeIcon} style={styles.closeIcon} resizeMode="contain" /></Pressable>
           </View>
           {tasks.map((task) => {
             const taskClaimed = claimed.includes(`${today}:${task.id}`);
@@ -63,7 +70,7 @@ const styles = StyleSheet.create({
   title: { fontFamily: fontFamily.bold, fontSize: 18, color: '#2A1105' },
   subtitle: { marginTop: 3, fontFamily: fontFamily.medium, fontSize: 11, color: '#766A61' },
   close: { width: 34, height: 34, borderRadius: 10, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontFamily: fontFamily.bold, fontSize: 24, lineHeight: 25, color: '#2A1105' },
+  closeIcon: { width: 21, height: 21 },
   taskRow: { minHeight: 72, marginTop: 9, borderRadius: 14, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', padding: 10, gap: 9 },
   status: { width: 34, height: 34, borderRadius: 9, borderWidth: 2, borderColor: '#907C6D', alignItems: 'center', justifyContent: 'center' },
   statusDone: { borderColor: '#4C7A2C', backgroundColor: '#EDF3E8' },

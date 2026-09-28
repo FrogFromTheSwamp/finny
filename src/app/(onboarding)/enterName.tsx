@@ -1,4 +1,4 @@
-import meadowBg from "@/assets/background/meadow.png";
+import meadowBg from "@/assets/library/scenes/field.png";
 import { useProfileStore } from "@/store/profileStore";
 import { AppText } from "@/ui/AppText";
 import { BackgroundScreen } from "@/ui/BackgroundScreen";

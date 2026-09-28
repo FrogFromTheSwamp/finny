@@ -56,11 +56,13 @@ type GameState = {
   completedChapters: string[];
   claimedChapterRewards: string[];
   budgetPlan: BudgetPlan;
+  piggy: number;
   goals: GoalRecord[];
   transactions: MoneyTransaction[];
   milestonesSeen: string[];
   equippedHat: HatId;
   ownedHats: HatId[];
+  tutorialStage: number;
   addCoins: (amount: number, title?: string) => void;
   setHunger: (value: number) => void;
   feed: (foodId: FoodId) => boolean;
@@ -90,17 +92,29 @@ type GameState = {
     name: string,
     target: number,
   ) => GoalRecord;
-  depositGoal: (goalId: string, amount: number) => boolean;
-  withdrawGoal: (goalId: string, amount: number) => boolean;
+  depositPiggy: (amount: number) => boolean;
+  withdrawPiggy: (amount: number) => boolean;
   purchaseGoal: (goalId: string) => boolean;
   removeGoal: (goalId: string) => void;
   markMilestoneSeen: (id: string) => void;
   equipHat: (hatId: HatId) => void;
   purchaseHat: (hatId: HatId) => boolean;
+  setTutorialStage: (stage: number) => void;
   resetGame: () => void;
 };
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
+const localDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+const todayKey = () => localDateKey(new Date());
+const yesterdayKey = () => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return localDateKey(date);
+};
 const tx = (
   title: string,
   amount: number,
@@ -114,7 +128,7 @@ const tx = (
 });
 const test = TEST_DATA_ENABLED ? makeTestGameData() : null;
 const initial = {
-  coins: test?.coins ?? 60,
+  coins: test?.coins ?? 0,
   xp: 0,
   level: test?.level ?? 1,
   streakDays: test?.streakDays ?? 0,
@@ -130,11 +144,13 @@ const initial = {
   completedChapters: [] as string[],
   claimedChapterRewards: [] as string[],
   budgetPlan: { need: 50, want: 30, save: 20 } as BudgetPlan,
+  piggy: 0,
   goals: [] as GoalRecord[],
   transactions: [] as MoneyTransaction[],
   milestonesSeen: [] as string[],
   equippedHat: "none" as HatId,
   ownedHats: ["none"] as HatId[],
+  tutorialStage: TEST_DATA_ENABLED ? 8 : 0,
 };
 
 export function useGameHydrated() {
@@ -277,15 +293,15 @@ export const useGameStore = create<GameState>()(
       claimDailyReward: () => {
         if (!get().canClaimDailyReward()) return 0;
         set((state) => ({
-          coins: state.coins + 25,
-          streakDays: state.streakDays + 1,
+          coins: state.coins + 10,
+          streakDays: state.lastRewardDate === yesterdayKey() ? state.streakDays + 1 : 1,
           lastRewardDate: todayKey(),
           transactions: [
-            tx("Ежедневная награда", 25, "reward"),
+            tx("Ежедневная награда", 10, "reward"),
             ...state.transactions,
           ].slice(0, 100),
         }));
-        return 25;
+        return 10;
       },
       claimTaskReward: (id, amount) => {
         if (get().taskRewardsClaimed.includes(id)) return false;
@@ -344,8 +360,8 @@ export const useGameStore = create<GameState>()(
           get().claimedChapterRewards.includes(chapterId)
         )
           return { ok: false, coins: 0, xp: 0 };
-        const coins = 60,
-          xp = 60;
+        const coins = 30,
+          xp = 25;
         set((state) => {
           const nextXp = state.xp + xp;
           return {
@@ -379,36 +395,27 @@ export const useGameStore = create<GameState>()(
         set((state) => ({ goals: [...state.goals, goal] }));
         return goal;
       },
-      depositGoal: (goalId, amount) => {
-        const requested = Math.max(0, Math.round(amount));
-        const goal = get().goals.find((g) => g.id === goalId);
-        if (!goal || goal.purchasedAt || requested <= 0) return false;
-        const value = Math.min(requested, goal.target - goal.saved);
-        if (value <= 0 || get().coins < value) return false;
+      depositPiggy: (amount) => {
+        const value = Math.min(get().coins, Math.max(0, Math.round(amount)));
+        if (value <= 0) return false;
         set((state) => ({
           coins: state.coins - value,
-          goals: state.goals.map((g) =>
-            g.id === goalId ? { ...g, saved: g.saved + value } : g,
-          ),
+          piggy: state.piggy + value,
           transactions: [
-            tx(`В копилку · ${goal.name}`, -value, "goal-deposit"),
+            tx("В копилку", -value, "goal-deposit"),
             ...state.transactions,
           ].slice(0, 100),
         }));
         return true;
       },
-      withdrawGoal: (goalId, amount) => {
-        const value = Math.max(0, Math.round(amount));
-        const goal = get().goals.find((g) => g.id === goalId);
-        if (!goal || goal.purchasedAt || value <= 0 || goal.saved < value)
-          return false;
+      withdrawPiggy: (amount) => {
+        const value = Math.min(get().piggy, Math.max(0, Math.round(amount)));
+        if (value <= 0) return false;
         set((state) => ({
           coins: state.coins + value,
-          goals: state.goals.map((g) =>
-            g.id === goalId ? { ...g, saved: g.saved - value } : g,
-          ),
+          piggy: state.piggy - value,
           transactions: [
-            tx(`Из копилки · ${goal.name}`, value, "goal-withdraw"),
+            tx("Из копилки", value, "goal-withdraw"),
             ...state.transactions,
           ].slice(0, 100),
         }));
@@ -416,42 +423,30 @@ export const useGameStore = create<GameState>()(
       },
       purchaseGoal: (goalId) => {
         const goal = get().goals.find((g) => g.id === goalId);
-        if (!goal || goal.purchasedAt || goal.saved < goal.target) return false;
+        if (!goal || goal.purchasedAt || get().piggy < goal.target) return false;
         set((state) => ({
+          piggy: state.piggy - goal.target,
           goals: state.goals.map((g) =>
             g.id === goalId
               ? { ...g, purchasedAt: new Date().toISOString() }
               : g,
           ),
+          ownedHats:
+            goal.templateId === "party-hat" && !state.ownedHats.includes("dotted")
+              ? [...state.ownedHats, "dotted"]
+              : state.ownedHats,
+          equippedHat: goal.templateId === "party-hat" ? "dotted" : state.equippedHat,
           transactions: [
-            tx(`Покупка цели · ${goal.name}`, -goal.target, "goal-purchase"),
+            tx(`Покупка из копилки · ${goal.name}`, -goal.target, "goal-purchase"),
             ...state.transactions,
           ].slice(0, 100),
         }));
         return true;
       },
       removeGoal: (goalId) =>
-        set((state) => {
-          const goal = state.goals.find((g) => g.id === goalId);
-          if (!goal) return state;
-          const refund = goal.purchasedAt ? 0 : goal.saved;
-          return {
-            ...state,
-            coins: state.coins + refund,
-            goals: state.goals.filter((g) => g.id !== goalId),
-            transactions:
-              refund > 0
-                ? [
-                    tx(
-                      `Возврат из цели · ${goal.name}`,
-                      refund,
-                      "goal-withdraw",
-                    ),
-                    ...state.transactions,
-                  ].slice(0, 100)
-                : state.transactions,
-          };
-        }),
+        set((state) => ({
+          goals: state.goals.filter((g) => g.id !== goalId),
+        })),
       markMilestoneSeen: (id) =>
         set((state) => ({
           milestonesSeen: state.milestonesSeen.includes(id)
@@ -480,19 +475,28 @@ export const useGameStore = create<GameState>()(
         }));
         return true;
       },
+      setTutorialStage: (stage) => set({ tutorialStage: Math.max(0, Math.min(8, Math.round(stage))) }),
       resetGame: () => set(initial),
     }),
     {
       name: TEST_DATA_ENABLED
         ? `finny-game-test-${TEST_DATA_SEED}-${TEST_DATA_SESSION}`
         : "finny-game",
-      version: 4,
+      version: 6,
       storage: createJSONStorage(() => AsyncStorage),
-      migrate: (persisted: any) => ({
+      migrate: (persisted: any) => {
+        const previousGoals = persisted?.goals ?? [];
+        const carried = previousGoals.reduce(
+          (sum: number, goal: { purchasedAt?: string; saved?: number }) =>
+            sum + (goal?.purchasedAt ? 0 : Number(goal?.saved) || 0),
+          0,
+        );
+        return {
         ...initial,
         ...(persisted ?? {}),
         budgetPlan: persisted?.budgetPlan ?? initial.budgetPlan,
-        goals: persisted?.goals ?? [],
+        piggy: typeof persisted?.piggy === "number" ? persisted.piggy : carried,
+        goals: previousGoals.map((goal: GoalRecord) => ({ ...goal, saved: 0 })),
         transactions: persisted?.transactions ?? [],
         completedLessons: persisted?.completedLessons ?? [],
         claimedLessonRewards: persisted?.claimedLessonRewards ?? [],
@@ -505,6 +509,11 @@ export const useGameStore = create<GameState>()(
         equippedHat: persisted?.ownedHats?.includes(persisted?.equippedHat)
           ? persisted.equippedHat
           : "none",
+        tutorialStage:
+          persisted?.tutorialStage ??
+          ((persisted?.transactions?.length ?? 0) > 0 || (persisted?.completedLessons?.length ?? 0) > 0
+            ? 8
+            : 0),
       }),
     },
   ),

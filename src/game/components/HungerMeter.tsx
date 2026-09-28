@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import Subtract from '@/assets/symbols/Subtract.svg';
+import Subtract from '@/assets/library/ui/icons/subtract.svg';
 
 function CookieIcon() {
   return (

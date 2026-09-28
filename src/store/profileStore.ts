@@ -17,12 +17,16 @@ type ProfileState = {
   petColorId: PetColorId | "";
   onboardingDone: boolean;
   tutorialFeedDone: boolean;
+  notificationsEnabled: boolean;
+  soundEnabled: boolean;
 
   setPlayerName: (name: string) => void;
   setPetColor: (colorId: PetColorId) => void;
   completeOnboarding: (petName: string) => void;
   resetProfile: () => void;
   completeTutorialFeed: () => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
+  setSoundEnabled: (enabled: boolean) => void;
 };
 
 const initialData: Pick<
@@ -32,12 +36,16 @@ const initialData: Pick<
   | "petColorId"
   | "onboardingDone"
   | "tutorialFeedDone"
+  | "notificationsEnabled"
+  | "soundEnabled"
 > = {
   playerName: TEST_DATA_ENABLED ? TEST_PROFILE.playerName : "",
   petName: TEST_DATA_ENABLED ? TEST_PROFILE.petName : "",
   petColorId: TEST_DATA_ENABLED ? TEST_PROFILE.petColorId : "",
   onboardingDone: TEST_DATA_ENABLED,
   tutorialFeedDone: TEST_DATA_ENABLED,
+  notificationsEnabled: true,
+  soundEnabled: false,
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -56,6 +64,8 @@ export const useProfileStore = create<ProfileState>()(
         }),
 
       completeTutorialFeed: () => set({ tutorialFeedDone: true }),
+      setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
+      setSoundEnabled: (soundEnabled) => set({ soundEnabled }),
 
       resetProfile: () => set(initialData),
     }),

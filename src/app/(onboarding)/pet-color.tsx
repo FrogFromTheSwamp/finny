@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import meadowBg from "@/assets/background/meadow.png";
+import meadowBg from "@/assets/library/scenes/field.png";
 import { PET_ASSETS } from "@/content/petAssets";
 import { PET_COLOR_OPTIONS, type PetColorId } from "@/content/petColors";
 import { useProfileStore } from "@/store/profileStore";

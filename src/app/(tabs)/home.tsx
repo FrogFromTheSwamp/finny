@@ -1,131 +1,81 @@
-import homeRoom from "@/assets/game/rooms/home-room.png";
-import type { PetColorId } from "@/content/petColors";
-import { DailyRewardModal } from "@/game/components/DailyRewardModal";
-import { GameHud } from "@/game/components/GameHud";
-import { PetSpeechBubble } from "@/game/components/PetSpeechBubble";
-import { PetWithHat } from "@/game/components/PetWithHat";
-import { showGameDialog } from "@/game/services/dialogService";
-import { useGameStore } from "@/game/store/gameStore";
-import { useProfileStore } from "@/store/profileStore";
-import { fontFamily } from "@/ui/theme";
-import { useEffect, useState } from "react";
-import {
-  ImageBackground,
-  StyleSheet,
-  View
-} from "react-native";
+import homeRoom from '@/assets/library/scenes/home.png';
+import type { PetColorId } from '@/content/petColors';
+import { DailyRewardModal } from '@/game/components/DailyRewardModal';
+import { GameHud } from '@/game/components/GameHud';
+import { PetSpeechBubble } from '@/game/components/PetSpeechBubble';
+import { PetWithHat } from '@/game/components/PetWithHat';
+import { showGameDialog } from '@/game/services/dialogService';
+import { useGameStore } from '@/game/store/gameStore';
+import { useProfileStore } from '@/store/profileStore';
+import { useEffect, useState } from 'react';
+import { ImageBackground, StyleSheet, View } from 'react-native';
 
 export default function HomeScreen() {
-  const petName = useProfileStore((s) => s.petName || "Финни");
-  const color = (useProfileStore((s) => s.petColorId) || "brown") as PetColorId;
-  const tutorialFeedDone = useProfileStore((s) => s.tutorialFeedDone);
-  const completeTutorialFeed = useProfileStore((s) => s.completeTutorialFeed);
+  const petName = useProfileStore((s) => s.petName || 'Финни');
+  const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
+  const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
-  const milestonesSeen = useGameStore((s) => s.milestonesSeen);
-  const markMilestoneSeen = useGameStore((s) => s.markMilestoneSeen);
   const [rewardOpen, setRewardOpen] = useState(false);
-  const [showTutorialSpeech, setShowTutorialSpeech] = useState(false);
+  const [showSpeech, setShowSpeech] = useState(false);
 
   useEffect(() => {
-    if (canClaim) {
-      const timer = setTimeout(() => setRewardOpen(true), 650);
-      return () => clearTimeout(timer);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    if (tutorialStage === 0) {
+      if (canClaim) timer = setTimeout(() => setRewardOpen(true), 550);
+      else setTutorialStage(1);
+    } else if (tutorialStage === 1 || tutorialStage === 5) {
+      timer = setTimeout(() => setShowSpeech(true), 450);
+    } else if (tutorialStage >= 8 && canClaim) {
+      timer = setTimeout(() => setRewardOpen(true), 650);
     }
-    if (!tutorialFeedDone) {
-      const timer = setTimeout(() => setShowTutorialSpeech(true), 650);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, []);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [tutorialStage, canClaim, setTutorialStage]);
 
-  useEffect(() => {
-    if (!tutorialFeedDone || milestonesSeen.includes("learning-unlocked"))
-      return;
-    const timer = setTimeout(() => {
-      markMilestoneSeen("learning-unlocked");
-      showGameDialog(
-        "Теперь можно проходить уроки на вкладке «Учёба». За уроки ты получаешь финники и открываешь новые возможности.",
-        { title: "Учёба открыта!" },
-      );
-    }, 700);
-    return () => clearTimeout(timer);
-  }, [tutorialFeedDone, milestonesSeen, markMilestoneSeen]);
-
-  const handleRewardClose = () => {
-    setRewardOpen(false);
-    if (!tutorialFeedDone) {
-      setShowTutorialSpeech(true);
-    }
-  };
-
-  const handleTutorialSpeechFinish = () => {
-    setShowTutorialSpeech(false);
-    completeTutorialFeed();
+  const finishSpeech = () => {
+    setShowSpeech(false);
+    if (tutorialStage === 1) setTutorialStage(2);
+    if (tutorialStage === 5) setTutorialStage(6);
   };
 
   return (
     <View style={styles.root}>
-      <ImageBackground
-        source={homeRoom}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-      />
+      <ImageBackground source={homeRoom} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <GameHud />
       <View style={styles.petArea}>
         <PetWithHat
           color={color}
-          onPress={() =>
-            showGameDialog(
-              `Привет! Я ${petName}. Если хочешь, покорми меня на вкладке «Еда» или выбери продукты в магазине.`,
-              { title: petName },
-            )
-          }
+          onPress={() => {
+            if (tutorialStage < 8) return;
+            showGameDialog(`Привет! Я ${petName}. Здесь наш дом — можно покормить меня, пройти уроки или заглянуть в копилку.`, { title: petName });
+          }}
         />
       </View>
-      {showTutorialSpeech && (
+      {showSpeech && tutorialStage === 1 ? (
         <PetSpeechBubble
-          lines={[
-            "Знаешь, что-то я проголодался...",
-            "Давай посмотрим нет ли у нас еды?",
-          ]}
-          onFinish={handleTutorialSpeechFinish}
+          lines={['Знаешь, что-то я проголодался...', 'Давай посмотрим, нет ли у нас еды?']}
+          onFinish={finishSpeech}
         />
-      )}
-      <DailyRewardModal visible={rewardOpen} onClose={handleRewardClose} />
+      ) : null}
+      {showSpeech && tutorialStage === 5 ? (
+        <PetSpeechBubble
+          lines={['Спасибо! Теперь я сыт.', 'Я очень хочу колпак в точечку. Давай посмотрим, есть ли он в гардеробе?']}
+          onFinish={finishSpeech}
+        />
+      ) : null}
+      <DailyRewardModal
+        visible={rewardOpen}
+        mandatory={tutorialStage === 0}
+        onClaimed={() => setTutorialStage(1)}
+        onClose={() => setRewardOpen(false)}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  petArea: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: "15%",
-    alignItems: "center",
-  },
-  rewardShortcut: {
-    position: "absolute",
-    left: 14,
-    bottom: 105,
-    minHeight: 42,
-    borderRadius: 11,
-    backgroundColor: "rgba(255,255,255,0.94)",
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 10,
-    gap: 5,
-    shadowColor: "#534122",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 0,
-    elevation: 3,
-  },
-  rewardEmoji: { fontSize: 18 },
-  rewardText: {
-    fontFamily: fontFamily.semiBold,
-    color: "#2A1105",
-    fontSize: 12,
-  },
+  petArea: { position: 'absolute', left: 0, right: 0, bottom: '15%', alignItems: 'center' },
 });

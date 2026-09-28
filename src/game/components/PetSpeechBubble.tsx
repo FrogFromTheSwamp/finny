@@ -1,4 +1,4 @@
-import PetSpeechBubbleBg from "@/assets/pet/SpeechBubble.png";
+import PetSpeechBubbleBg from "@/assets/library/ui/speech-bubble.png";
 import { AppText } from "@/ui/AppText";
 import { useState } from "react";
 import { ImageBackground, Pressable, StyleSheet } from "react-native";

@@ -1,15 +1,14 @@
-import type { ImageSourcePropType } from "react-native";
+import type { ImageSourcePropType } from 'react-native';
 
-import hatCap from "@/assets/game/wardrobe/hat-cap.png";
-import hatCrown from "@/assets/game/wardrobe/hat-crown.png";
-import hatDotted from "@/assets/game/wardrobe/hat-dotted.png";
-import hatNoneIcon from "@/assets/game/wardrobe/hat-none.png";
-import hatPurple from "@/assets/game/wardrobe/hat-purple.png";
+import hatCap from '@/assets/library/wardrobe/items/green-cap.png';
+import hatGold from '@/assets/library/wardrobe/items/gold-hat.png';
+import hatDotted from '@/assets/library/wardrobe/items/blue-dotted-hat.png';
+import hatPurple from '@/assets/library/wardrobe/items/violet-hat.png';
 
-export type HatId = "none" | "dotted" | "purple" | "cap" | "crown";
+export type HatId = 'none' | 'dotted' | 'purple' | 'cap' | 'crown';
 
 export type HatAttachment = {
-  align: "center" | "right";
+  align: 'center' | 'right';
   rotation: number;
 };
 
@@ -17,54 +16,56 @@ export type HatItem = {
   id: HatId;
   name: string;
   price: number;
-  previewImage: ImageSourcePropType;
+  previewImage: ImageSourcePropType | null;
   wornImage: ImageSourcePropType | null;
   attachment: HatAttachment | null;
 };
 
+/**
+ * Runtime hat catalogue. IDs are intentionally stable because they are stored
+ * in AsyncStorage. Visuals come from the normalized Figma component library.
+ */
 export const HATS: HatItem[] = [
   {
-    id: "none",
-    name: "Без шляпки",
+    id: 'none',
+    name: 'Без головного убора',
     price: 0,
-    previewImage: hatNoneIcon,
+    previewImage: null,
     wornImage: null,
     attachment: null,
   },
   {
-    id: "dotted",
-    name: "Шляпка в точечку",
+    id: 'dotted',
+    name: 'Колпак в точечку',
     price: 16,
     previewImage: hatDotted,
     wornImage: hatDotted,
-    attachment: { align: "right", rotation: -18 },
+    attachment: { align: 'right', rotation: -18 },
   },
   {
-    id: "purple",
-    name: "Фиолетовая шляпка",
+    id: 'purple',
+    name: 'Фиолетовая шляпка',
     price: 40,
     previewImage: hatPurple,
     wornImage: hatPurple,
-    attachment: { align: "right", rotation: -18 },
+    attachment: { align: 'right', rotation: -16 },
   },
   {
-    id: "cap",
-    name: "Кепка",
+    id: 'cap',
+    name: 'Зелёная кепка',
     price: 32,
     previewImage: hatCap,
     wornImage: hatCap,
-    attachment: { align: "center", rotation: 0 },
+    attachment: { align: 'center', rotation: 0 },
   },
   {
-    id: "crown",
-    name: "Корона",
+    id: 'crown',
+    name: 'Золотая шляпка',
     price: 45,
-    previewImage: hatCrown,
-    wornImage: hatCrown,
-    attachment: { align: "center", rotation: 0 },
+    previewImage: hatGold,
+    wornImage: hatGold,
+    attachment: { align: 'center', rotation: 0 },
   },
 ];
 
-export const HAT_BY_ID = Object.fromEntries(
-  HATS.map((h) => [h.id, h]),
-) as Record<HatId, HatItem>;
+export const HAT_BY_ID = Object.fromEntries(HATS.map((h) => [h.id, h])) as Record<HatId, HatItem>;

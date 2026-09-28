@@ -1,7 +1,9 @@
-import happy from '@/assets/game/characters/pet-brown-eating-hd.png';
 import { FinnyButton } from '@/components/FinnyButton';
+import type { PetColorId } from '@/content/petColors';
 import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
+import { PetWithHat } from '@/game/components/PetWithHat';
 import { useGameStore } from '@/game/store/gameStore';
+import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -9,25 +11,91 @@ import { Alert, Animated, Image, Pressable, StyleSheet, Text, TextInput, View } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function GoalDetailScreen() {
-  const router = useRouter(); const { id } = useLocalSearchParams<{id:string}>();
-  const goal = useGameStore((s)=>s.goals.find((g)=>g.id===String(id)));
-  const coins = useGameStore((s)=>s.coins); const deposit=useGameStore((s)=>s.depositGoal); const withdraw=useGameStore((s)=>s.withdrawGoal); const purchase=useGameStore((s)=>s.purchaseGoal); const remove=useGameStore((s)=>s.removeGoal);
-  const [amount,setAmount]=useState('5'); const shake=useRef(new Animated.Value(0)).current;
-  useEffect(()=>{ if(goal?.purchasedAt && goal.templateId==='party-hat'){ Animated.loop(Animated.sequence([Animated.timing(shake,{toValue:-1,duration:110,useNativeDriver:true}),Animated.timing(shake,{toValue:1,duration:110,useNativeDriver:true}),Animated.timing(shake,{toValue:0,duration:110,useNativeDriver:true}),Animated.delay(600)])).start(); } },[goal?.purchasedAt,goal?.templateId,shake]);
-  if(!goal) return <SafeAreaView style={styles.root}><Text>Цель не найдена</Text></SafeAreaView>;
-  const template=GOAL_TEMPLATE_BY_ID[goal.templateId]; const pct=Math.min(100,Math.round(goal.saved/goal.target*100)); const value=Math.max(1,Number(amount)||0);
-  const doDeposit=()=>{ if(!deposit(goal.id,value)) Alert.alert('Не получилось','Проверь баланс или сумму пополнения.'); };
-  const doWithdraw=()=>{ if(!withdraw(goal.id,value)) Alert.alert('Не получилось','Нельзя снять больше, чем уже накоплено.'); };
-  const doPurchase=()=>{ if(!purchase(goal.id)) Alert.alert('Пока рано','Сначала накопи полную сумму.'); };
-  if(goal.purchasedAt) return <SafeAreaView style={styles.root}><Pressable onPress={()=>router.back()}><Text style={styles.back}>‹</Text></Pressable><Text style={styles.successTitle}>Поздравляем!</Text><Text style={styles.successText}>Ты накопил на «{goal.name}» и купил цель.</Text><Image source={happy} style={styles.pet} resizeMode="contain"/><Animated.Image source={template.image} style={[styles.purchasedImage,{ transform:[{ rotate: shake.interpolate({inputRange:[-1,0,1],outputRange:['-7deg','0deg','7deg']}) }] }]} resizeMode="contain"/><View style={styles.bottom}><FinnyButton label="Готово" onPress={()=>router.replace('/(tabs)/goals')}/></View></SafeAreaView>;
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const goal = useGameStore((s) => s.goals.find((g) => g.id === String(id)));
+  const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
+  const coins = useGameStore((s) => s.coins);
+  const deposit = useGameStore((s) => s.depositGoal);
+  const withdraw = useGameStore((s) => s.withdrawGoal);
+  const purchase = useGameStore((s) => s.purchaseGoal);
+  const remove = useGameStore((s) => s.removeGoal);
+  const [amount, setAmount] = useState('5');
+  const shake = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!goal?.purchasedAt) return;
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(shake, { toValue: -1, duration: 110, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 1, duration: 110, useNativeDriver: true }),
+      Animated.timing(shake, { toValue: 0, duration: 110, useNativeDriver: true }),
+      Animated.delay(600),
+    ]));
+    loop.start();
+    return () => loop.stop();
+  }, [goal?.purchasedAt, shake]);
+
+  if (!goal) return <SafeAreaView style={styles.root}><Text>Цель не найдена</Text></SafeAreaView>;
+  const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
+  const pct = Math.min(100, Math.round(goal.saved / goal.target * 100));
+  const value = Math.max(1, Number(amount) || 0);
+  const doDeposit = () => { if (!deposit(goal.id, value)) Alert.alert('Не получилось', 'Проверь баланс или сумму пополнения.'); };
+  const doWithdraw = () => { if (!withdraw(goal.id, value)) Alert.alert('Не получилось', 'Нельзя снять больше, чем уже накоплено.'); };
+  const doPurchase = () => { if (!purchase(goal.id)) Alert.alert('Пока рано', 'Сначала накопи полную сумму.'); };
+
+  if (goal.purchasedAt) return <SafeAreaView style={styles.root}>
+    <Pressable onPress={() => router.back()}><Text style={styles.back}>‹</Text></Pressable>
+    <Text style={styles.successTitle}>Цель достигнута!</Text>
+    <Text style={styles.successText}>Ты накопил на «{goal.name}».</Text>
+    <View style={styles.pet}><PetWithHat color={color} emotion="happy" /></View>
+    <Animated.Image source={template.image} style={[styles.purchasedImage, { transform: [{ rotate: shake.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-7deg', '0deg', '7deg'] }) }] }]} resizeMode="contain"/>
+    <View style={styles.bottom}><FinnyButton label="Готово" onPress={() => router.replace('/(tabs)/goals')}/></View>
+  </SafeAreaView>;
+
   return <SafeAreaView style={styles.root}>
-    <View style={styles.header}><Pressable onPress={()=>router.back()}><Text style={styles.back}>‹</Text></Pressable><Text style={styles.headerTitle}>Финансовая цель</Text></View>
-    <View style={styles.content}><Image source={template.image} style={styles.hero} resizeMode="contain"/><Text style={styles.goalName}>{goal.name}</Text><Text style={styles.money}>{goal.saved} из {goal.target} 🟡</Text><View style={styles.progress}><View style={[styles.fill,{width:`${pct}%`}]} /></View><Text style={styles.hint}>{pct}% · доступно на общем балансе: {coins} 🟡</Text>
-      <Text style={styles.label}>Сумма операции</Text><TextInput keyboardType="number-pad" value={amount} onChangeText={setAmount} style={styles.input}/><View style={styles.quick}>{[5,10,25].map((v)=><Pressable key={v} onPress={()=>setAmount(String(v))} style={styles.quickBtn}><Text style={styles.quickText}>{v}</Text></Pressable>)}</View>
+    <View style={styles.header}><Pressable onPress={() => router.back()}><Text style={styles.back}>‹</Text></Pressable><Text style={styles.headerTitle}>Финансовая цель</Text></View>
+    <View style={styles.content}>
+      <Image source={template.image} style={styles.hero} resizeMode="contain"/>
+      <Text style={styles.goalName}>{goal.name}</Text>
+      <Text style={styles.money}>{goal.saved} из {goal.target} ●</Text>
+      <View style={styles.progress}><View style={[styles.fill, { width: `${pct}%` }]} /></View>
+      <Text style={styles.hint}>{pct}% · на общем балансе: {coins} ●</Text>
+      <Text style={styles.label}>Сумма операции</Text>
+      <TextInput keyboardType="number-pad" value={amount} onChangeText={setAmount} style={styles.input}/>
+      <View style={styles.quick}>{[5, 10, 25].map((v) => <Pressable key={v} onPress={() => setAmount(String(v))} style={styles.quickBtn}><Text style={styles.quickText}>{v}</Text></Pressable>)}</View>
       <View style={styles.actions}><Pressable onPress={doDeposit} style={styles.action}><Text style={styles.actionText}>＋ Пополнить</Text></Pressable><Pressable onPress={doWithdraw} style={styles.action}><Text style={styles.actionText}>− Снять</Text></Pressable></View>
-      {goal.saved>=goal.target ? <FinnyButton label="Купить цель" onPress={doPurchase} style={styles.buy}/> : <Text style={styles.remaining}>Осталось накопить {goal.target-goal.saved} 🟡</Text>}
-      <Pressable onPress={()=>Alert.alert('Удалить цель?','Накопленные монеты вернутся только если сначала снять их.',[{text:'Отмена',style:'cancel'},{text:'Удалить',style:'destructive',onPress:()=>{remove(goal.id);router.back();}}])}><Text style={styles.delete}>Удалить цель</Text></Pressable>
+      {goal.saved >= goal.target ? <FinnyButton label="Купить цель" onPress={doPurchase} style={styles.buy}/> : <Text style={styles.remaining}>Осталось накопить {goal.target - goal.saved} ●</Text>}
+      <Pressable onPress={() => Alert.alert('Удалить цель?', 'Накопленные монеты вернутся только если сначала снять их.', [{ text: 'Отмена', style: 'cancel' }, { text: 'Удалить', style: 'destructive', onPress: () => { remove(goal.id); router.back(); } }])}><Text style={styles.delete}>Удалить цель</Text></Pressable>
     </View>
   </SafeAreaView>;
 }
-const styles=StyleSheet.create({root:{flex:1,backgroundColor:'#F6F5F3',paddingHorizontal:18},header:{height:58,flexDirection:'row',alignItems:'center'},back:{fontSize:38,color:'#2A180E',width:35},headerTitle:{fontFamily:fontFamily.bold,fontSize:20,color:'#2A180E'},content:{alignItems:'center'},hero:{width:220,height:205,marginTop:12},goalName:{fontFamily:fontFamily.bold,fontSize:25,color:'#29180F',textAlign:'center'},money:{fontFamily:fontFamily.bold,fontSize:20,color:'#6E4B31',marginTop:9},progress:{width:'100%',height:12,borderRadius:6,backgroundColor:'#DDD6D1',overflow:'hidden',marginTop:14},fill:{height:'100%',backgroundColor:'#F2A719'},hint:{fontFamily:fontFamily.medium,fontSize:11,color:'#81736B',marginTop:8},label:{alignSelf:'flex-start',fontFamily:fontFamily.bold,color:'#2B1A11',marginTop:24,marginBottom:7},input:{width:'100%',height:54,borderRadius:11,borderWidth:2,borderColor:'#C9C0BA',backgroundColor:'#fff',paddingHorizontal:14,fontFamily:fontFamily.bold,fontSize:20,color:'#2B1A11'},quick:{flexDirection:'row',alignSelf:'flex-start',gap:7,marginTop:8},quickBtn:{paddingHorizontal:15,paddingVertical:8,borderRadius:16,backgroundColor:'#E7E1DD'},quickText:{fontFamily:fontFamily.bold,color:'#553A2A'},actions:{width:'100%',flexDirection:'row',gap:10,marginTop:20},action:{flex:1,height:50,borderRadius:10,backgroundColor:'#fff',borderWidth:1,borderColor:'#BFB5AE',alignItems:'center',justifyContent:'center'},actionText:{fontFamily:fontFamily.bold,color:'#3D2416'},buy:{width:'100%',marginTop:15},remaining:{fontFamily:fontFamily.semiBold,color:'#6E625B',marginTop:18},delete:{fontFamily:fontFamily.medium,color:'#AE3E32',textDecorationLine:'underline',marginTop:24},successTitle:{fontFamily:fontFamily.bold,fontSize:31,color:'#28170E',textAlign:'center',marginTop:40},successText:{fontFamily:fontFamily.medium,color:'#6F625B',textAlign:'center',lineHeight:20,marginTop:8},pet:{width:220,height:200,alignSelf:'center',marginTop:20},purchasedImage:{width:160,height:120,alignSelf:'center',marginTop:-15},bottom:{position:'absolute',left:18,right:18,bottom:22}});
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#F6F5F3', paddingHorizontal: 18 },
+  header: { height: 58, flexDirection: 'row', alignItems: 'center' },
+  back: { fontSize: 38, color: '#2A180E', width: 35 },
+  headerTitle: { fontFamily: fontFamily.bold, fontSize: 20, color: '#2A180E' },
+  content: { alignItems: 'center' },
+  hero: { width: 220, height: 205, marginTop: 12 },
+  goalName: { fontFamily: fontFamily.bold, fontSize: 25, color: '#29180F', textAlign: 'center' },
+  money: { fontFamily: fontFamily.bold, fontSize: 20, color: '#6E4B31', marginTop: 9 },
+  progress: { width: '100%', height: 12, borderRadius: 6, backgroundColor: '#DDD6D1', overflow: 'hidden', marginTop: 14 },
+  fill: { height: '100%', backgroundColor: '#F2A719' },
+  hint: { fontFamily: fontFamily.medium, fontSize: 11, color: '#81736B', marginTop: 8 },
+  label: { alignSelf: 'flex-start', fontFamily: fontFamily.bold, color: '#2B1A11', marginTop: 24, marginBottom: 7 },
+  input: { width: '100%', height: 54, borderRadius: 11, borderWidth: 2, borderColor: '#C9C0BA', backgroundColor: '#fff', paddingHorizontal: 14, fontFamily: fontFamily.bold, fontSize: 20, color: '#2B1A11' },
+  quick: { flexDirection: 'row', alignSelf: 'flex-start', gap: 7, marginTop: 8 },
+  quickBtn: { paddingHorizontal: 15, paddingVertical: 8, borderRadius: 16, backgroundColor: '#E7E1DD' },
+  quickText: { fontFamily: fontFamily.bold, color: '#553A2A' },
+  actions: { width: '100%', flexDirection: 'row', gap: 10, marginTop: 20 },
+  action: { flex: 1, height: 50, borderRadius: 10, backgroundColor: '#fff', borderWidth: 1, borderColor: '#BFB5AE', alignItems: 'center', justifyContent: 'center' },
+  actionText: { fontFamily: fontFamily.bold, color: '#3D2416' },
+  buy: { width: '100%', marginTop: 15 },
+  remaining: { fontFamily: fontFamily.semiBold, color: '#6E625B', marginTop: 18 },
+  delete: { fontFamily: fontFamily.medium, color: '#AE3E32', textDecorationLine: 'underline', marginTop: 24 },
+  successTitle: { fontFamily: fontFamily.bold, fontSize: 31, color: '#28170E', textAlign: 'center', marginTop: 40 },
+  successText: { fontFamily: fontFamily.medium, color: '#6F625B', textAlign: 'center', lineHeight: 20, marginTop: 8 },
+  pet: { width: 280, height: 210, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', marginTop: 15 },
+  purchasedImage: { width: 160, height: 120, alignSelf: 'center', marginTop: -15 },
+  bottom: { position: 'absolute', left: 18, right: 18, bottom: 22 },
+});

@@ -1,53 +1,114 @@
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import fire from '@/assets/game/ui/streak-fire.png';
+import closeIcon from '@/assets/library/ui/icons/close.png';
+import dayActive from '@/assets/library/ui/calendar/day-active.png';
+import dayCompleted from '@/assets/library/ui/calendar/day-completed.png';
+import dayDefault from '@/assets/library/ui/calendar/day-default.png';
+import fire from '@/assets/library/ui/effects/streak-fire.png';
 import { useGameStore } from '@/game/store/gameStore';
-import { showGameDialog } from '@/game/services/dialogService';
 import { fontFamily } from '@/ui/theme';
+import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-export function DailyRewardModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+const localDateKey = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const yesterdayKey = () => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return localDateKey(date);
+};
+
+type Props = {
+  visible: boolean;
+  onClose: () => void;
+  onClaimed?: () => void;
+  mandatory?: boolean;
+};
+
+export function DailyRewardModal({ visible, onClose, onClaimed, mandatory = false }: Props) {
   const streak = useGameStore((s) => s.streakDays);
+  const lastRewardDate = useGameStore((s) => s.lastRewardDate);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
   const claim = useGameStore((s) => s.claimDailyReward);
+  const continuesSeries = lastRewardDate === yesterdayKey();
+  const displayStreak = canClaim ? (continuesSeries ? streak + 1 : 1) : Math.max(1, streak);
+  const completedDays = canClaim ? (continuesSeries ? Math.min(6, Math.max(0, streak)) : 0) : Math.min(7, Math.max(0, streak));
+  const activeDay = canClaim ? Math.min(6, completedDays) : -1;
+
   const claimReward = () => {
     const amount = claim();
+    if (amount) onClaimed?.();
     onClose();
-    if (amount) showGameDialog(`+${amount} монет! Серия входов продолжается.`, { title: 'Награда получена' });
   };
+
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={() => { if (!mandatory) onClose(); }}>
       <View style={styles.backdrop}>
         <View style={styles.sheet}>
-          <Pressable style={styles.close} onPress={onClose}><Text style={styles.closeText}>×</Text></Pressable>
-          <View style={styles.fireWrap}><Image source={fire} style={styles.fire} resizeMode="contain" /><Text style={styles.streak}>{streak}</Text></View>
-          <View style={styles.weekRow}>
-            {DAYS.map((day, index) => {
-              const completed = index < Math.min(7, Math.max(0, streak - (canClaim ? 0 : 1)));
-              return <View key={day} style={styles.dayCol}><Text style={styles.dayLabel}>{day}</Text><View style={[styles.dot, completed && styles.dotDone]}>{completed ? <Text style={styles.tick}>✓</Text> : null}</View></View>;
-            })}
+          {!mandatory ? (
+            <Pressable style={styles.close} onPress={onClose} accessibilityLabel="Закрыть"><Image source={closeIcon} style={styles.closeIcon} resizeMode="contain" /></Pressable>
+          ) : null}
+
+          <Text style={styles.title}>Заходи каждый день</Text>
+          <Text style={styles.subtitle}>Серия входов растёт, а сегодня тебя ждут 10 монет.</Text>
+          <View style={styles.fireWrap}>
+            <Image source={fire} style={styles.fire} resizeMode="contain" />
+            <Text style={styles.streak}>{displayStreak}</Text>
           </View>
-          <View style={styles.rewardRow}><Text style={styles.rewardTitle}>Ежедневная награда</Text><Text style={styles.rewardValue}>+25 <Text style={styles.coin}>●</Text></Text></View>
-          <Pressable disabled={!canClaim} style={[styles.cta, !canClaim && styles.ctaDisabled]} onPress={claimReward}><Text style={styles.ctaText}>{canClaim ? 'Погнали дальше!' : 'Награда уже получена'}</Text></Pressable>
+
+          <View style={styles.weekCard}>
+            <View style={styles.weekRow}>
+              {DAYS.map((day, index) => {
+                const source = index < completedDays ? dayCompleted : index === activeDay ? dayActive : dayDefault;
+                return (
+                  <View key={day} style={styles.dayCol}>
+                    <Text style={styles.dayLabel}>{day}</Text>
+                    <Image source={source} style={styles.dayState} resizeMode="contain" />
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.rewardRow}>
+            <View><Text style={styles.rewardTitle}>Награда за сегодня</Text><Text style={styles.rewardSub}>Добавится на общий баланс</Text></View>
+            <Text style={styles.rewardValue}>+10 <Text style={styles.coin}>●</Text></Text>
+          </View>
+
+          <Pressable disabled={!canClaim} style={[styles.cta, !canClaim && styles.ctaDisabled]} onPress={claimReward}>
+            <Text style={styles.ctaText}>{canClaim ? 'Забрать награду' : 'Награда уже получена'}</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
   );
 }
+
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(40,14,0,0.25)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#F7F4F1', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 18, paddingTop: 18, paddingBottom: 34, minHeight: 420 },
-  close: { position: 'absolute', right: 14, top: 10, zIndex: 3, width: 36, height: 36, borderRadius: 18, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  closeText: { fontFamily: fontFamily.bold, fontSize: 26, color: '#3B1606', lineHeight: 28 },
-  fireWrap: { height: 140, alignItems: 'center', justifyContent: 'center' },
-  fire: { width: 105, height: 115 },
-  streak: { position: 'absolute', bottom: 28, fontFamily: fontFamily.bold, color: '#9D360C', fontSize: 28 },
-  weekRow: { backgroundColor: '#fff', borderRadius: 14, padding: 11, flexDirection: 'row', justifyContent: 'space-between' },
-  dayCol: { alignItems: 'center', gap: 6 }, dayLabel: { fontFamily: fontFamily.medium, color: '#4F433C', fontSize: 12 },
-  dot: { width: 26, height: 26, borderRadius: 13, backgroundColor: '#EEE5DB', alignItems: 'center', justifyContent: 'center' },
-  dotDone: { backgroundColor: '#E9E4D0' }, tick: { color: '#5B7D37', fontFamily: fontFamily.bold },
-  rewardRow: { marginTop: 12, height: 58, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  rewardTitle: { fontFamily: fontFamily.bold, color: '#2A1105', fontSize: 14 }, rewardValue: { fontFamily: fontFamily.semiBold, color: '#2A1105' }, coin: { color: '#F2A900' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(40,14,0,0.30)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#F3F1EF', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 18, paddingTop: 22, paddingBottom: 30, minHeight: 468 },
+  close: { position: 'absolute', right: 14, top: 12, zIndex: 3, width: 34, height: 34, borderRadius: 17, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  closeIcon: { width: 22, height: 22 },
+  title: { fontFamily: fontFamily.bold, color: '#2A160A', fontSize: 24, textAlign: 'center' },
+  subtitle: { fontFamily: fontFamily.medium, color: '#776A62', fontSize: 12, lineHeight: 17, textAlign: 'center', paddingHorizontal: 34, marginTop: 6 },
+  fireWrap: { height: 112, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  fire: { width: 92, height: 100 },
+  streak: { position: 'absolute', bottom: 20, fontFamily: fontFamily.bold, color: '#9D360C', fontSize: 26 },
+  weekCard: { backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 8, paddingVertical: 10 },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  dayCol: { alignItems: 'center', gap: 4 },
+  dayLabel: { fontFamily: fontFamily.medium, color: '#55483F', fontSize: 10 },
+  dayState: { width: 38, height: 38 },
+  rewardRow: { marginTop: 12, minHeight: 62, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  rewardTitle: { fontFamily: fontFamily.bold, color: '#2A1105', fontSize: 14 },
+  rewardSub: { fontFamily: fontFamily.medium, color: '#81736B', fontSize: 10, marginTop: 2 },
+  rewardValue: { fontFamily: fontFamily.bold, color: '#2A1105', fontSize: 19 },
+  coin: { color: '#F2A900' },
   cta: { marginTop: 16, height: 52, borderRadius: 12, backgroundColor: '#3B1606', alignItems: 'center', justifyContent: 'center' },
-  ctaDisabled: { opacity: 0.45 }, ctaText: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 15 },
+  ctaDisabled: { opacity: 0.45 },
+  ctaText: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 15 },
 });

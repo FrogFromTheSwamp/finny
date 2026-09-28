@@ -1,272 +1,213 @@
-import happy from "@/assets/game/characters/pet-brown-eating-hd.png";
-import piggy from "@/assets/learning/savings/piggy-bank.png";
-import { FinnyButton } from "@/components/FinnyButton";
-import { BudgetDonut, PlanSliders } from "@/features/budget/BudgetControls";
-import { GOAL_TEMPLATE_BY_ID } from "@/features/goals/catalog";
-import { CHAPTER_BY_ID, type ChapterId } from "@/features/learning/content";
-import { useGameStore, type BudgetPlan } from "@/game/store/gameStore";
-import { fontFamily } from "@/ui/theme";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState } from "react";
-import {
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useShallow } from "zustand/react/shallow";
+import wallet from '@/assets/library/learning/items/wallet.png';
+import { FinnyButton } from '@/components/FinnyButton';
+import type { PetColorId } from '@/content/petColors';
+import { BudgetDonut, PlanSliders } from '@/features/budget/BudgetControls';
+import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
+import { CHAPTER_BY_ID, type ChapterId } from '@/features/learning/content';
+import { PetWithHat } from '@/game/components/PetWithHat';
+import { useGameStore, type BudgetPlan } from '@/game/store/gameStore';
+import { useProfileStore } from '@/store/profileStore';
+import { fontFamily } from '@/ui/theme';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useShallow } from 'zustand/react/shallow';
 
 export default function ChapterCompleteScreen() {
   const router = useRouter();
   const { chapter: chapterParam } = useLocalSearchParams<{ chapter: string }>();
   const chapterId = String(chapterParam) as ChapterId;
   const chapter = CHAPTER_BY_ID[chapterId];
-  const claimed = useGameStore((s) =>
-    s.claimedChapterRewards.includes(chapterId),
-  );
-  const claim = useGameStore((s) => s.claimChapterReward);
+  const coins = useGameStore((s) => s.coins);
   const storedPlan = useGameStore((s) => s.budgetPlan);
   const savePlan = useGameStore((s) => s.setBudgetPlan);
-  const goals = useGameStore(
-    useShallow((s) =>
-      s.goals.filter((g) => !g.purchasedAt && g.saved < g.target),
-    ),
-  );
+  const completeChapter = useGameStore((s) => s.completeChapter);
+  const claimChapterReward = useGameStore((s) => s.claimChapterReward);
+  const completedChapters = useGameStore((s) => s.completedChapters);
+  const claimedChapterRewards = useGameStore((s) => s.claimedChapterRewards);
+  const lessonAccuracy = useGameStore((s) => s.lessonAccuracy);
+  const goals = useGameStore(useShallow((s) => s.goals.filter((g) => !g.purchasedAt && g.saved < g.target)));
   const depositGoal = useGameStore((s) => s.depositGoal);
   const milestones = useGameStore((s) => s.milestonesSeen);
   const markSeen = useGameStore((s) => s.markMilestoneSeen);
+  const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
+  const petName = useProfileStore((s) => s.petName || 'Финни');
   const distributionKey = `chapter-distribution-${chapterId}`;
+  const growthKey = 'pet-grown-after-budget';
   const alreadyDistributed = milestones.includes(distributionKey);
-  const [stage, setStage] = useState(claimed ? 2 : 0);
+  const rewardClaimed = claimedChapterRewards.includes(chapterId);
+  const [stage, setStage] = useState(0);
   const [plan, setPlan] = useState<BudgetPlan>(storedPlan);
-  const [selectedGoal, setSelectedGoal] = useState(goals[0]?.id ?? "");
+  const [selectedGoal, setSelectedGoal] = useState(goals[0]?.id ?? '');
+  const [distributionBalance, setDistributionBalance] = useState(coins);
+
   if (!chapter) return null;
-  const savedPart = Math.max(0, Math.round((60 * plan.save) / 100));
-  const finish = () => router.replace("/(tabs)/learn");
-  const next = () => {
-    if (stage === 0) return setStage(1);
-    if (stage === 1) {
-      if (!claimed) claim(chapterId);
-      return setStage(2);
+
+  const accuracyValues = chapter.lessons.map((lessonId) => lessonAccuracy[lessonId]).filter((value): value is number => typeof value === 'number');
+  const chapterAccuracy = accuracyValues.length
+    ? Math.round(accuracyValues.reduce((sum, value) => sum + value, 0) / accuracyValues.length)
+    : 100;
+
+  const savedPart = Math.max(0, Math.round((distributionBalance * plan.save) / 100));
+  const needsGrowth = chapterId === 'budget' && !milestones.includes(growthKey);
+
+  const finish = () => {
+    if (!completedChapters.includes(chapterId)) completeChapter(chapterId);
+    router.replace('/(tabs)/learn');
+  };
+
+  const afterDistribution = () => {
+    if (needsGrowth) {
+      setStage(4);
+      return;
     }
-    if (stage === 2) {
-      savePlan(plan);
-      if (goals.length && savedPart > 0 && !alreadyDistributed)
-        return setStage(3);
-      return finish();
-    }
-    if (selectedGoal && savedPart > 0) depositGoal(selectedGoal, savedPart);
-    markSeen(distributionKey);
     finish();
   };
-  return (
-    <SafeAreaView style={styles.root}>
-      {stage === 0 ? (
-        <>
-          <Text style={styles.kicker}>Глава завершена</Text>
-          <Text style={styles.title}>{chapter.title}</Text>
-          <Image source={happy} style={styles.hero} resizeMode="contain" />
-          <Text style={styles.big}>Отличная работа!</Text>
-          <Text style={styles.body}>
-            Ты прошёл все 4 урока главы. Теперь знания можно применить в копилке
-            и следующих заданиях.
-          </Text>
-          <View style={styles.summary}>
-            <Text style={styles.summaryText}>4/4 урока</Text>
-            <Text style={styles.summaryText}>+60 🟡</Text>
-            <Text style={styles.summaryText}>+60 XP</Text>
-          </View>
-        </>
-      ) : null}
-      {stage === 1 ? (
-        <>
-          <Text style={styles.kicker}>Награда за главу</Text>
-          <Text style={styles.title}>Забери финники</Text>
-          <Image source={piggy} style={styles.hero} resizeMode="contain" />
-          <Text style={styles.reward}>+60 🟡</Text>
-          <Text style={styles.body}>
-            Часть награды можно распределить на обязательное, желания и
-            накопления.
-          </Text>
-        </>
-      ) : null}
-      {stage === 2 ? (
-        <>
-          <Text style={styles.kicker}>План расходов</Text>
-          <Text style={styles.title}>Как распределим бюджет?</Text>
-          <View style={styles.donut}>
-            <BudgetDonut plan={plan} size={172} />
-          </View>
-          <PlanSliders plan={plan} onChange={setPlan} />
-          <Text style={styles.note}>
-            Серые отметки показывают ориентир 50 / 30 / 20. В «Отложу» сейчас
-            попадает {savedPart} из 60 монет награды.
-          </Text>
-        </>
-      ) : null}
-      {stage === 3 ? (
-        <>
-          <Text style={styles.kicker}>Отложу · {savedPart} 🟡</Text>
-          <Text style={styles.title}>На какую цель?</Text>
-          <Text style={styles.body}>
-            Выбери цель — эта часть награды сразу попадёт в её копилку. Можно
-            нажать «Позже», тогда монеты останутся на общем балансе.
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.goalRow}
-          >
-            {goals.map((goal) => (
-              <Pressable
-                key={goal.id}
-                onPress={() => setSelectedGoal(goal.id)}
-                style={[
-                  styles.goalCard,
-                  selectedGoal === goal.id && styles.goalCardOn,
-                ]}
-              >
-                <Image
-                  source={GOAL_TEMPLATE_BY_ID[goal.templateId].image}
-                  style={styles.goalImage}
-                  resizeMode="contain"
-                />
-                <Text style={styles.goalName}>{goal.name}</Text>
-                <Text style={styles.goalMoney}>
-                  {goal.saved}/{goal.target} 🟡
-                </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-          <Pressable
-            onPress={() => {
-              markSeen(distributionKey);
-              finish();
-            }}
-          >
-            <Text style={styles.later}>Позже</Text>
-          </Pressable>
-        </>
-      ) : null}
-      <View style={styles.bottom}>
-        <FinnyButton
-          label={
-            stage === 0
-              ? "Продолжить"
-              : stage === 1
-                ? claimed
-                  ? "Дальше"
-                  : "Забрать финники"
-                : stage === 2
-                  ? "Сохранить план"
-                  : "Отложить на цель"
-          }
-          onPress={next}
-        />
+
+  const claimAndOpenDistribution = () => {
+    if (!completedChapters.includes(chapterId)) completeChapter(chapterId);
+    if (!rewardClaimed) claimChapterReward(chapterId);
+    setDistributionBalance(useGameStore.getState().coins);
+    setStage(1);
+  };
+
+  const saveDistribution = () => {
+    savePlan(plan);
+    if (goals.length && savedPart > 0 && !alreadyDistributed) {
+      setStage(2);
+      return;
+    }
+    markSeen(distributionKey);
+    afterDistribution();
+  };
+
+  const applyGoalDistribution = () => {
+    if (selectedGoal && savedPart > 0) depositGoal(selectedGoal, savedPart);
+    markSeen(distributionKey);
+    afterDistribution();
+  };
+
+  const skipGoalDistribution = () => {
+    markSeen(distributionKey);
+    afterDistribution();
+  };
+
+  const finishGrowth = () => {
+    markSeen(growthKey);
+    finish();
+  };
+
+  const distributionView = (dimmed = false) => (
+    <View style={dimmed ? styles.dimmed : undefined} pointerEvents={dimmed ? 'none' : 'auto'}>
+      <Text style={styles.kicker}>Распределение бюджета</Text>
+      <Text style={styles.title}>Распредели монеты так, как считаешь правильным</Text>
+      <View style={styles.donut}>
+        <BudgetDonut plan={plan} size={176} centerMain={`${distributionBalance}`} centerSub="монет" />
       </View>
+      <PlanSliders plan={plan} onChange={setPlan} />
+      <Text style={styles.note}>Отметки 50 / 30 / 20 — ориентир. Сейчас в накопления попадёт примерно {savedPart} монет.</Text>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {stage === 0 ? (
+          <>
+            <Text style={styles.kicker}>Конец главы!</Text>
+            <Text style={styles.title}>Пришло время распределить бюджет</Text>
+            <View style={styles.rewardHero}>
+              <Image source={wallet} style={styles.wallet} resizeMode="contain" />
+              <View style={styles.pet}><PetWithHat color={color} emotion="happy" forceChild={chapterId === 'budget'} /></View>
+            </View>
+            <View style={styles.stats}>
+              <View style={styles.stat}><Text style={styles.statLabel}>Заработано</Text><Text style={styles.statValue}>30 ●</Text></View>
+              <View style={styles.stat}><Text style={styles.statLabel}>Опыт</Text><Text style={styles.statValue}>+25</Text></View>
+              <View style={styles.stat}><Text style={styles.statLabel}>Точность</Text><Text style={styles.statValue}>{chapterAccuracy}%</Text></View>
+            </View>
+            <Text style={styles.body}>{chapter.title} пройдена. Забери награду и реши, какую часть баланса оставить на нужное, желания и цели.</Text>
+          </>
+        ) : null}
+
+        {stage === 1 ? distributionView() : null}
+
+        {stage === 2 ? (
+          <View style={styles.distributionModalStage}>
+            {distributionView(true)}
+            <View style={styles.modalShade} />
+            <View style={styles.goalModal}>
+              <Text style={styles.goalModalTitle}>Ты отложил {savedPart} ● на цели</Text>
+              <Text style={styles.goalModalText}>Давай выберем, на какую цель отправить эти монеты.</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
+                {goals.map((goal) => (
+                  <Pressable key={goal.id} onPress={() => setSelectedGoal(goal.id)} style={[styles.goalCard, selectedGoal === goal.id && styles.goalCardOn]}>
+                    <Image source={GOAL_TEMPLATE_BY_ID[goal.templateId].image} style={styles.goalImage} resizeMode="contain" />
+                    <Text style={styles.goalName}>{goal.name}</Text>
+                    <Text style={styles.goalMoney}>{goal.saved}/{goal.target} ●</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+              <FinnyButton label="Выбрать" onPress={applyGoalDistribution} disabled={!selectedGoal} />
+              <Pressable onPress={skipGoalDistribution} hitSlop={10}><Text style={styles.later}>Позже</Text></Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {stage === 4 ? (
+          <>
+            <Text style={styles.kicker}>Новый этап</Text>
+            <Text style={styles.title}>{petName} подрос!</Text>
+            <View style={styles.petGrowth}><PetWithHat color={color} emotion="happy" forceGrown /></View>
+            <Text style={styles.big}>Первая глава позади</Text>
+            <Text style={styles.body}>Ты научился планировать бюджет — и {petName} стал взрослее вместе с тобой. С этого момента взрослый образ сохранится во всём приложении.</Text>
+            <Text style={styles.sparkles}>✦  ✦  ✦</Text>
+          </>
+        ) : null}
+      </ScrollView>
+
+      {stage !== 2 ? (
+        <View style={styles.bottom}>
+          <FinnyButton
+            label={stage === 0 ? (rewardClaimed ? 'Распределить бюджет' : 'Забрать финники') : stage === 1 ? 'Готово!' : 'Продолжить'}
+            onPress={stage === 0 ? claimAndOpenDistribution : stage === 1 ? saveDistribution : finishGrowth}
+          />
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#F7F7F7",
-    paddingHorizontal: 24,
-    paddingTop: 32,
-  },
-  kicker: {
-    fontFamily: fontFamily.semiBold,
-    color: "#776A63",
-    fontSize: 12,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
-  title: {
-    fontFamily: fontFamily.bold,
-    fontSize: 28,
-    color: "#23150E",
-    textAlign: "center",
-    marginTop: 8,
-  },
-  hero: { width: 230, height: 210, alignSelf: "center", marginTop: 22 },
-  big: {
-    fontFamily: fontFamily.bold,
-    fontSize: 22,
-    color: "#23150E",
-    textAlign: "center",
-    marginTop: 4,
-  },
-  body: {
-    fontFamily: fontFamily.medium,
-    color: "#5E514A",
-    textAlign: "center",
-    lineHeight: 21,
-    marginTop: 10,
-  },
-  summary: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 20,
-  },
-  summaryText: {
-    fontFamily: fontFamily.bold,
-    color: "#2B1B13",
-    backgroundColor: "#fff",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  reward: {
-    fontFamily: fontFamily.bold,
-    fontSize: 36,
-    color: "#C47A00",
-    textAlign: "center",
-    marginTop: 4,
-  },
-  donut: { alignItems: "center", marginVertical: 14 },
-  note: {
-    marginTop: 20,
-    fontFamily: fontFamily.medium,
-    fontSize: 11,
-    lineHeight: 16,
-    color: "#7D716A",
-    textAlign: "center",
-  },
-  bottom: { position: "absolute", left: 24, right: 24, bottom: 24 },
-  goalRow: { gap: 12, paddingTop: 26, paddingBottom: 14, paddingRight: 15 },
-  goalCard: {
-    width: 155,
-    minHeight: 190,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: "#DED9D5",
-    backgroundColor: "#fff",
-    padding: 10,
-    alignItems: "center",
-  },
-  goalCardOn: { borderColor: "#3F7824", backgroundColor: "#EFF7EA" },
-  goalImage: { width: 118, height: 112 },
-  goalName: {
-    fontFamily: fontFamily.bold,
-    color: "#29190F",
-    textAlign: "center",
-    fontSize: 12,
-  },
-  goalMoney: {
-    fontFamily: fontFamily.semiBold,
-    color: "#765C49",
-    fontSize: 11,
-    marginTop: 4,
-  },
-  later: {
-    fontFamily: fontFamily.bold,
-    color: "#6D625B",
-    textAlign: "center",
-    textDecorationLine: "underline",
-    marginTop: 12,
-  },
+  root: { flex: 1, backgroundColor: '#F7F7F7' },
+  content: { paddingHorizontal: 24, paddingTop: 30, paddingBottom: 118, flexGrow: 1 },
+  kicker: { fontFamily: fontFamily.semiBold, color: '#776A63', fontSize: 12, textAlign: 'center', textTransform: 'uppercase' },
+  title: { fontFamily: fontFamily.bold, fontSize: 27, lineHeight: 32, color: '#23150E', textAlign: 'center', marginTop: 8 },
+  rewardHero: { height: 230, marginTop: 6, alignItems: 'center', justifyContent: 'flex-end' },
+  wallet: { position: 'absolute', width: 150, height: 120, right: 28, bottom: 22, transform: [{ rotate: '8deg' }] },
+  pet: { width: 280, height: 215, alignItems: 'center', justifyContent: 'flex-end' },
+  stats: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginTop: 4 },
+  stat: { flex: 1, minHeight: 82, borderRadius: 13, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E1DDDA', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  statLabel: { fontFamily: fontFamily.medium, fontSize: 10, color: '#796E68', textAlign: 'center' },
+  statValue: { marginTop: 6, fontFamily: fontFamily.bold, fontSize: 18, color: '#28180F' },
+  big: { fontFamily: fontFamily.bold, fontSize: 21, color: '#23150E', textAlign: 'center', marginTop: 3 },
+  body: { fontFamily: fontFamily.medium, color: '#5E514A', textAlign: 'center', lineHeight: 21, marginTop: 14 },
+  donut: { alignItems: 'center', marginVertical: 18 },
+  note: { marginTop: 18, fontFamily: fontFamily.medium, fontSize: 11, lineHeight: 16, color: '#7D716A', textAlign: 'center' },
+  bottom: { position: 'absolute', left: 24, right: 24, bottom: 24 },
+  distributionModalStage: { flex: 1, minHeight: 680, position: 'relative' },
+  dimmed: { opacity: 0.28 },
+  modalShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(30,19,13,0.28)', marginHorizontal: -24, marginTop: -30 },
+  goalModal: { position: 'absolute', left: 0, right: 0, top: 120, borderRadius: 22, backgroundColor: '#F7F7F7', padding: 20, shadowColor: '#24140B', shadowOpacity: 0.18, shadowRadius: 16, elevation: 8 },
+  goalModalTitle: { fontFamily: fontFamily.bold, color: '#23150E', fontSize: 23, lineHeight: 28, textAlign: 'center' },
+  goalModalText: { marginTop: 8, fontFamily: fontFamily.medium, color: '#695D56', fontSize: 13, lineHeight: 19, textAlign: 'center' },
+  goalRow: { gap: 10, paddingTop: 18, paddingBottom: 18, paddingRight: 10 },
+  goalCard: { width: 138, minHeight: 170, borderRadius: 14, borderWidth: 2, borderColor: '#DED9D5', backgroundColor: '#fff', padding: 9, alignItems: 'center' },
+  goalCardOn: { borderColor: '#3F7824', backgroundColor: '#EFF7EA' },
+  goalImage: { width: 105, height: 100 },
+  goalName: { fontFamily: fontFamily.bold, color: '#29190F', textAlign: 'center', fontSize: 11 },
+  goalMoney: { fontFamily: fontFamily.semiBold, color: '#765C49', fontSize: 10, marginTop: 4 },
+  later: { fontFamily: fontFamily.bold, color: '#6D625B', textAlign: 'center', textDecorationLine: 'underline', marginTop: 14 },
+  petGrowth: { height: 250, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  sparkles: { textAlign: 'center', fontSize: 28, color: '#E5A124', marginTop: 16 },
 });

@@ -1,11 +1,11 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import bicycle from '@/assets/items/bicycle.png';
-import car from '@/assets/items/car.png';
-import devices from '@/assets/items/devices.png';
-import iceCream from '@/assets/items/ice-cream.png';
-import partyHat from '@/assets/items/party-hat.png';
-import teddy from '@/assets/items/teddy.png';
+import bicycle from '@/assets/library/learning/items/bicycle.png';
+import car from '@/assets/library/learning/items/car.png';
+import laptop from '@/assets/library/learning/items/laptop.png';
+import iceCream from '@/assets/library/learning/items/ice-cream.png';
+import partyHat from '@/assets/library/wardrobe/items/blue-dotted-hat.png';
+import teddy from '@/assets/library/learning/items/teddy.png';
 
 export type GoalTemplateId = 'party-hat' | 'bicycle' | 'devices' | 'teddy' | 'car' | 'ice-cream';
 
@@ -17,9 +17,9 @@ export type GoalTemplate = {
 };
 
 export const GOAL_TEMPLATES: GoalTemplate[] = [
-  { id: 'party-hat', name: 'Колпак к тортику', target: 15, image: partyHat },
+  { id: 'party-hat', name: 'Колпак в точечку', target: 15, image: partyHat },
   { id: 'bicycle', name: 'Велосипед', target: 120, image: bicycle },
-  { id: 'devices', name: 'Новый гаджет', target: 150, image: devices },
+  { id: 'devices', name: 'Ноутбук', target: 150, image: laptop },
   { id: 'teddy', name: 'Плюшевый мишка', target: 45, image: teddy },
   { id: 'car', name: 'Игрушечная машинка', target: 70, image: car },
   { id: 'ice-cream', name: 'Большое мороженое', target: 30, image: iceCream },

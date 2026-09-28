@@ -1,27 +1,15 @@
-import Fire from "@/assets/symbols/Fire.svg";
-import Settings from "@/assets/symbols/Settings.svg";
-import TaskBook from "@/assets/symbols/TaskBook.svg";
+import fireIcon from "@/assets/library/ui/icons/fire-solid.png";
+import settingsIcon from "@/assets/library/ui/icons/settings-alt.png";
+import bookIcon from "@/assets/library/ui/icons/book-open.png";
 import { HungerMeter } from "@/game/components/HungerMeter";
 import { TasksModal } from "@/game/components/TasksModal";
-import { showGameDialog } from "@/game/services/dialogService";
 import { useGameStore } from "@/game/store/gameStore";
 import { fontFamily } from "@/ui/theme";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Circle, Path } from "react-native-svg";
-
-function SettingsGlyph() {
-  return (
-    <Svg width={38} height={38} viewBox="0 0 24 24">
-      <Path
-        fill="#2A1105"
-        d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.2 7.2 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42L9.13 5.07c-.61.25-1.17.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.49.49 0 0 0 .12.64l2.11 1.65c-.05.32-.08.66-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.13.23.4.32.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.58 1.69-.98l2.49 1c.22.08.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"
-      />
-    </Svg>
-  );
-}
+import Svg, { Circle } from "react-native-svg";
 
 function LevelBadge({ value }: { value: number }) {
   const r = 25;
@@ -86,14 +74,10 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
         <View style={styles.topTools}>
           <Pressable
             style={styles.fireButton}
-            onPress={() =>
-              showGameDialog(
-                `Серия входов: ${streak} дн. Заходи каждый день, чтобы сохранить огонёк.`,
-                { title: "Серия входов" },
-              )
-            }
+            onPress={() => router.push("/streak")}
+            accessibilityLabel={`Серия входов: ${streak}`}
           >
-            <Fire style={styles.fire} />
+            <Image source={fireIcon} style={styles.fire} resizeMode="contain" />
             <Text style={styles.fireText}>{streak}</Text>
           </Pressable>
           <Pressable
@@ -101,7 +85,7 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
             onPress={() => router.push("/settings")}
             accessibilityLabel="Настройки"
           >
-            <Settings />
+            <Image source={settingsIcon} style={styles.settingsIcon} resizeMode="contain" />
           </Pressable>
         </View>
       </View>
@@ -113,7 +97,7 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
             onPress={() => setTasksOpen(true)}
             accessibilityLabel="Задания"
           >
-            <TaskBook width="40"></TaskBook>
+            <Image source={bookIcon} style={styles.taskBook} resizeMode="contain" />
           </Pressable>
         </View>
       ) : null}
@@ -188,6 +172,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     top: 17,
   },
+  settingsIcon: { width: 32, height: 32 },
   settings: {
     width: 50,
     height: 50,
@@ -201,6 +186,7 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: "center",
   },
+  taskBook: { width: 34, height: 34 },
   tasks: {
     width: 54,
     height: 54,
@@ -213,19 +199,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 4,
-  },
-  taskSquare: {
-    width: 30,
-    height: 30,
-    borderRadius: 4,
-    backgroundColor: "#2A1105",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  taskIcon: {
-    fontFamily: fontFamily.bold,
-    fontSize: 20,
-    color: "#fff",
-    lineHeight: 23,
   },
 });

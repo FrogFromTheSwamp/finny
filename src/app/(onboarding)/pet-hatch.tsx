@@ -12,7 +12,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 
-import meadowBg from "@/assets/background/meadow.png";
+import meadowBg from "@/assets/library/scenes/field.png";
 import { HATCH_CAPTIONS } from "@/content/hatchStages";
 import { PET_ASSETS } from "@/content/petAssets";
 import type { PetColorId } from "@/content/petColors";

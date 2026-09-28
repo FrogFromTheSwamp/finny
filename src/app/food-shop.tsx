@@ -1,5 +1,7 @@
-import categoryBasket from "@/assets/game/ui/category-basket.png";
-import shelfPlank from "@/assets/game/ui/Shelf.png";
+import categoryBasket from "@/assets/library/food/ui/category-basket.png";
+import leftArrow from "@/assets/library/ui/arrows/left.png";
+import rightArrow from "@/assets/library/ui/arrows/right.png";
+import shelfPlank from "@/assets/library/ui/shelf.png";
 import {
     FOOD_BY_ID,
     FOOD_CATEGORIES,
@@ -7,6 +9,7 @@ import {
     type FoodCategoryId,
     type FoodId,
 } from "@/game/catalog";
+import { TutorialHand } from "@/game/components/TutorialHand";
 import { showGameDialog } from "@/game/services/dialogService";
 import { useGameStore } from "@/game/store/gameStore";
 import { fontFamily } from "@/ui/theme";
@@ -41,6 +44,8 @@ export default function FoodShopScreen() {
   const flightX = useRef(new Animated.Value(0)).current;
   const flightY = useRef(new Animated.Value(0)).current;
   const coins = useGameStore((s) => s.coins);
+  const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const purchaseFood = useGameStore((s) => s.purchaseFood);
   const refundFood = useGameStore((s) => s.refundFood);
   const items = useMemo(
@@ -62,6 +67,8 @@ export default function FoodShopScreen() {
       });
       return;
     }
+
+    if (tutorialStage === 3 && foodId === "apple") setTutorialStage(4);
 
     const product = productRefs.current[foodId];
     const basket = basketRef.current;
@@ -128,6 +135,7 @@ export default function FoodShopScreen() {
           style={styles.backButton}
         >
           <Text style={styles.back}>‹</Text>
+          {tutorialStage === 4 ? <TutorialHand style={styles.backHand} rotate="25deg" /> : null}
         </Pressable>
         <Text style={styles.title}>Продукты</Text>
         <View style={styles.balance}>
@@ -160,6 +168,9 @@ export default function FoodShopScreen() {
                     <Text style={styles.priceText}>{item.price}</Text>
                     <Text style={styles.priceCoin}>●</Text>
                   </View>
+                  {tutorialStage === 3 && item.id === "apple" ? (
+                    <TutorialHand style={styles.appleHand} rotate="-18deg" />
+                  ) : null}
                 </Pressable>
               ))}
               {row.length < 3 &&
@@ -172,7 +183,7 @@ export default function FoodShopScreen() {
       </ScrollView>
       <View style={styles.categoryBox}>
         <Pressable onPress={() => moveCategory(-1)} style={styles.arrow}>
-          <Text style={styles.arrowText}>‹</Text>
+          <Image source={leftArrow} style={styles.arrowImage} resizeMode="contain" />
         </Pressable>
         <Pressable
           ref={basketRef}
@@ -207,7 +218,7 @@ export default function FoodShopScreen() {
           </Text>
         </Pressable>
         <Pressable onPress={() => moveCategory(1)} style={styles.arrow}>
-          <Text style={styles.arrowText}>›</Text>
+          <Image source={rightArrow} style={styles.arrowImage} resizeMode="contain" />
         </Pressable>
       </View>
       {flyingFood ? (
@@ -237,6 +248,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  backHand: { top: 24, left: 12 },
+  appleHand: { top: 10, right: -18 },
   backButton: {
     width: 32,
     height: 42,
@@ -338,12 +351,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  arrowText: {
-    fontFamily: fontFamily.bold,
-    fontSize: 50,
-    color: "#4B7A2C",
-    lineHeight: 52,
-  },
+  arrowImage: { width: 48, height: 50 },
   categoryLabel: {
     position: "absolute",
     bottom: 9,

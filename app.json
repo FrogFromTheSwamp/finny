@@ -4,16 +4,16 @@
     "slug": "finny",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/logo/finni-logo.png",
+    "icon": "./src/assets/branding/finny-logo.png",
     "scheme": "finny",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./src/assets/logo/finni-logo.png"
+      "icon": "./src/assets/branding/finny-logo.png"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/logo/finni-logo.png"
+        "foregroundImage": "./src/assets/branding/finny-logo.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -26,7 +26,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
-          "image": "./src/assets/logo/finni-logo.png",
+          "image": "./src/assets/branding/finny-logo.png",
           "imageWidth": 76
         }
       ],

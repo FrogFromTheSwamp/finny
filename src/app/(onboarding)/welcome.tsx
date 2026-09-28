@@ -1,5 +1,5 @@
-import meadowBg from "@/assets/background/meadow.png";
-import finniLogo from "@/assets/logo/finni-logo.png";
+import meadowBg from "@/assets/library/scenes/field.png";
+import finniLogo from "@/assets/branding/finny-logo.png";
 import { BackgroundScreen } from "@/ui/BackgroundScreen";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";

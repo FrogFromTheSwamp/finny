@@ -1,69 +1,166 @@
-import piggy from '@/assets/learning/savings/piggy-bank.png';
+import piggy from '@/assets/library/learning/items/piggy-bank-5.png';
+import partyHat from '@/assets/library/wardrobe/items/blue-dotted-hat.png';
 import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
 import { GameHud } from '@/game/components/GameHud';
 import { useGameStore } from '@/game/store/gameStore';
 import { fontFamily } from '@/ui/theme';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { showGameDialog } from '@/game/services/dialogService';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function GoalsScreen() {
   const router = useRouter();
   const goals = useGameStore((s) => s.goals);
   const transactions = useGameStore((s) => s.transactions);
   const completedChapters = useGameStore((s) => s.completedChapters);
+  const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const milestonesSeen = useGameStore((s) => s.milestonesSeen);
   const markMilestoneSeen = useGameStore((s) => s.markMilestoneSeen);
-  const totalSaved = goals.filter((g) => !g.purchasedAt).reduce((sum,g) => sum + g.saved, 0);
+  const purchaseGoal = useGameStore((s) => s.purchaseGoal);
+  const [firstGoalOpen, setFirstGoalOpen] = useState(false);
+  const [goalReadyOpen, setGoalReadyOpen] = useState(false);
   const activeGoals = goals.filter((g) => !g.purchasedAt);
+  const totalSaved = activeGoals.reduce((sum, g) => sum + g.saved, 0);
   const planUnlocked = completedChapters.includes('budget');
+  const readyHatGoal = useMemo(() => activeGoals.find((g) => g.templateId === 'party-hat' && g.saved >= g.target), [activeGoals]);
+
   useEffect(() => {
-    if (!goals.length || milestonesSeen.includes('first-goal')) return;
-    markMilestoneSeen('first-goal');
-    showGameDialog('Поздравляем! Ты добавил первую финансовую цель. Пополняй её понемногу — прогресс сохранится.', { title: 'Первая цель!' });
-  }, [goals.length, milestonesSeen, markMilestoneSeen]);
-  return <View style={styles.root}>
-    <GameHud showHunger={false}/>
-    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Копилка</Text>
-      <View style={styles.walletCard}>
-        <Image source={piggy} style={styles.piggy} resizeMode="contain"/>
-        <View style={styles.walletInfo}><Text style={styles.walletLabel}>В целях накоплено</Text><Text style={styles.walletValue}>{totalSaved} 🟡</Text><Text style={styles.walletHint}>Пополняй цели из общего баланса Финни.</Text></View>
-      </View>
+    if (tutorialStage === 7 && goals.some((g) => g.templateId === 'party-hat')) setFirstGoalOpen(true);
+  }, [tutorialStage, goals]);
 
-      <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Цели</Text><Pressable onPress={() => router.push('/goal-editor')}><Text style={styles.link}>+ Добавить</Text></Pressable></View>
-      {activeGoals.length ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
-        {activeGoals.map((goal) => {
-          const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
-          const pct = Math.min(100, Math.round(goal.saved / goal.target * 100));
-          return <Pressable key={goal.id} onPress={() => router.push({ pathname: '/goal-detail', params: { id: goal.id } })} style={styles.goalCard}>
-            <Image source={template.image} style={styles.goalImage} resizeMode="contain"/>
-            <Text style={styles.goalName} numberOfLines={2}>{goal.name}</Text>
-            <Text style={styles.goalMoney}>{goal.saved} из {goal.target} 🟡</Text>
-            <View style={styles.progress}><View style={[styles.progressFill,{ width: `${pct}%` }]} /></View>
-          </Pressable>;
-        })}
-      </ScrollView> : <Pressable onPress={() => router.push('/goal-editor')} style={styles.emptyGoal}><Text style={styles.emptyPlus}>＋</Text><Text style={styles.emptyTitle}>Добавь первую цель</Text><Text style={styles.emptyText}>Выбери вещь и начни копить на неё небольшими шагами.</Text></Pressable>}
+  useEffect(() => {
+    if (readyHatGoal && !milestonesSeen.includes('party-hat-ready') && tutorialStage >= 8) setGoalReadyOpen(true);
+  }, [readyHatGoal, milestonesSeen, tutorialStage]);
 
-      <Text style={styles.sectionTitle}>Инструменты</Text>
-      <Pressable disabled={!planUnlocked} onPress={() => router.push('/budget-plan')} style={[styles.toolCard,!planUnlocked && styles.toolLocked]}>
-        <View style={[styles.toolIcon,{ backgroundColor: '#F8AE28' }]}><Text style={styles.toolEmoji}>◔</Text></View><View style={styles.toolText}><Text style={styles.toolTitle}>План расходов</Text><Text style={styles.toolSub}>{planUnlocked ? 'Настрой доли «Нужно / Хочу / Отложу»' : 'Откроется после главы «Бюджет»'}</Text></View><Text style={styles.chev}>›</Text>
-      </Pressable>
-      <Pressable onPress={() => router.push('/history')} style={styles.toolCard}>
-        <View style={[styles.toolIcon,{ backgroundColor: '#4E82DB' }]}><Text style={styles.toolEmoji}>↻</Text></View><View style={styles.toolText}><Text style={styles.toolTitle}>История покупок</Text><Text style={styles.toolSub}>{transactions.length ? `${transactions.length} операций · последняя: ${transactions[0]?.title}` : 'Здесь появятся покупки, награды и накопления'}</Text></View><Text style={styles.chev}>›</Text>
-      </Pressable>
-      {goals.some((g) => g.purchasedAt) ? <View style={styles.bought}><Text style={styles.sectionTitle}>Куплено благодаря накоплениям</Text>{goals.filter((g)=>g.purchasedAt).map((g)=><View key={g.id} style={styles.boughtRow}><Image source={GOAL_TEMPLATE_BY_ID[g.templateId].image} style={styles.boughtImg} resizeMode="contain"/><Text style={styles.boughtText}>{g.name}</Text><Text style={styles.done}>✓</Text></View>)}</View> : null}
-    </ScrollView>
-  </View>;
+  const goToFirstLesson = () => {
+    setFirstGoalOpen(false);
+    setTutorialStage(8);
+    router.push({ pathname: '/lesson/[id]', params: { id: 'budget-1' } });
+  };
+
+  const openGoalAction = (kind: 'deposit' | 'withdraw') => {
+    const first = activeGoals[0];
+    if (!first) return router.push('/goal-editor');
+    router.push({ pathname: '/goal-detail', params: { id: first.id, action: kind } });
+  };
+
+  const tryHat = () => {
+    if (readyHatGoal) purchaseGoal(readyHatGoal.id);
+    markMilestoneSeen('party-hat-ready');
+    setGoalReadyOpen(false);
+    router.replace('/(tabs)/shop');
+  };
+
+  return (
+    <View style={styles.root}>
+      <GameHud showHunger={false} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Text style={styles.title}>Копилка</Text>
+        <View style={styles.walletCard}>
+          <Image source={piggy} style={styles.piggy} resizeMode="contain" />
+          <View style={styles.walletRight}>
+            <Text style={styles.walletValue}>{totalSaved} <Text style={styles.coin}>●</Text></Text>
+            <View style={styles.walletActions}>
+              <Pressable style={styles.walletButton} onPress={() => openGoalAction('deposit')}><Text style={styles.walletButtonText}>↑ Пополнить</Text></Pressable>
+              <Pressable style={styles.walletButton} onPress={() => openGoalAction('withdraw')}><Text style={styles.walletButtonText}>↓ Снять</Text></Pressable>
+            </View>
+          </View>
+        </View>
+
+        <Pressable disabled={!planUnlocked} onPress={() => router.push('/budget-plan')} style={[styles.simpleRow, !planUnlocked && styles.locked]}>
+          <View style={styles.planBars}><View style={[styles.planBar, { height: 24, backgroundColor: '#F8AE28' }]} /><View style={[styles.planBar, { height: 18, backgroundColor: '#D52C7D' }]} /><View style={[styles.planBar, { height: 12, backgroundColor: '#4E82DB' }]} /></View>
+          <View style={styles.simpleText}><Text style={styles.simpleTitle}>План расходов</Text><Text style={styles.simpleSub}>{planUnlocked ? 'Нужно · Хочу · Отложу' : 'Откроется после первой главы'}</Text></View><Text style={styles.chev}>›</Text>
+        </Pressable>
+
+        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Цели</Text><Pressable style={styles.addButton} onPress={() => router.push('/goal-editor')}><Text style={styles.addButtonText}>Добавить цель</Text></Pressable></View>
+        {activeGoals.length ? (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
+            {activeGoals.map((goal) => {
+              const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
+              const pct = Math.min(100, Math.round((goal.saved / goal.target) * 100));
+              return <Pressable key={goal.id} onPress={() => router.push({ pathname: '/goal-detail', params: { id: goal.id } })} style={styles.goalCard}>
+                <Image source={template.image} style={styles.goalImage} resizeMode="contain" />
+                <View style={styles.goalInfo}><Text style={styles.goalName} numberOfLines={2}>{goal.name}</Text><Text style={styles.goalMoney}>{goal.saved} из {goal.target} <Text style={styles.coin}>●</Text></Text><View style={styles.progress}><View style={[styles.progressFill, { width: `${pct}%` }]} /></View></View>
+                <View style={styles.goalPlus}><Text style={styles.goalPlusText}>+</Text></View>
+              </Pressable>;
+            })}
+          </ScrollView>
+        ) : (
+          <Pressable onPress={() => router.push('/goal-editor')} style={styles.emptyGoal}><Text style={styles.emptyPlus}>＋</Text><Text style={styles.emptyTitle}>Добавь первую цель</Text></Pressable>
+        )}
+
+        <Pressable onPress={() => router.push('/history')} style={styles.simpleRow}>
+          <View style={styles.historyIcon}><Text style={styles.historyIconText}>↻</Text></View>
+          <View style={styles.simpleText}><Text style={styles.simpleTitle}>История покупок</Text><Text style={styles.simpleSub}>{transactions.length ? `${transactions.length} операций` : 'Пока операций нет'}</Text></View><Text style={styles.chev}>›</Text>
+        </Pressable>
+      </ScrollView>
+
+      <Modal visible={firstGoalOpen} transparent animationType="fade" onRequestClose={() => {}}>
+        <View style={styles.modalBackdrop}><View style={styles.modalCard}>
+          <Image source={partyHat} style={styles.modalAsset} resizeMode="contain" />
+          <Text style={styles.modalTitle}>Поздравляем, ты добавил свою первую цель!</Text>
+          <Text style={styles.modalText}>Давай выполним задание, чтобы накопить на неё?</Text>
+          <Pressable style={styles.modalButton} onPress={goToFirstLesson}><Text style={styles.modalButtonText}>Перейти к урокам</Text></Pressable>
+        </View></View>
+      </Modal>
+
+      <Modal visible={goalReadyOpen} transparent animationType="fade" onRequestClose={() => setGoalReadyOpen(false)}>
+        <View style={styles.modalBackdrop}><View style={styles.modalCard}>
+          <Image source={partyHat} style={styles.modalAsset} resizeMode="contain" />
+          <Text style={styles.modalTitle}>Поздравляем, ты накопил на колпак в точечку!</Text>
+          <Text style={styles.modalText}>Теперь ты можешь примерить его.</Text>
+          <Pressable style={styles.modalButton} onPress={tryHat}><Text style={styles.modalButtonText}>Перейти в гардероб</Text></Pressable>
+        </View></View>
+      </Modal>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F2F2F2' }, content: { paddingTop: 126, paddingHorizontal: 16, paddingBottom: 130 }, title: { fontFamily: fontFamily.bold, fontSize: 30, color: '#2B170B', marginBottom: 14 },
-  walletCard: { minHeight: 156, borderRadius: 16, backgroundColor: '#1764B4', flexDirection: 'row', alignItems: 'center', padding: 16, overflow: 'hidden' }, piggy: { width: 120, height: 120 }, walletInfo: { flex: 1, paddingLeft: 6 }, walletLabel: { fontFamily: fontFamily.medium, color: '#DCEBFA', fontSize: 12 }, walletValue: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 30, marginTop: 3 }, walletHint: { fontFamily: fontFamily.medium, color: '#fff', fontSize: 11, lineHeight: 15, marginTop: 6 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 10 }, sectionTitle: { fontFamily: fontFamily.bold, fontSize: 18, color: '#28170E', marginTop: 22, marginBottom: 10 }, sectionHeaderTitle: {}, link: { fontFamily: fontFamily.bold, color: '#1764B4', marginTop: 22 },
-  goalRow: { gap: 12, paddingRight: 12 }, goalCard: { width: 178, minHeight: 218, borderRadius: 15, backgroundColor: '#fff', padding: 12, borderWidth: 1, borderColor: '#E2DEDB' }, goalImage: { width: '100%', height: 118 }, goalName: { fontFamily: fontFamily.bold, fontSize: 14, color: '#2A1B13', minHeight: 35 }, goalMoney: { fontFamily: fontFamily.semiBold, color: '#745B49', fontSize: 11, marginTop: 5 }, progress: { height: 8, borderRadius: 4, backgroundColor: '#E6E1DD', marginTop: 9, overflow: 'hidden' }, progressFill: { height: '100%', backgroundColor: '#F4A91D' },
-  emptyGoal: { minHeight: 175, borderRadius: 15, backgroundColor: '#fff', borderWidth: 2, borderColor: '#D7D0CB', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', padding: 20 }, emptyPlus: { fontFamily: fontFamily.medium, fontSize: 35, color: '#1764B4' }, emptyTitle: { fontFamily: fontFamily.bold, fontSize: 16, color: '#2A1B13' }, emptyText: { fontFamily: fontFamily.medium, fontSize: 12, lineHeight: 17, color: '#7A6D65', textAlign: 'center', marginTop: 5 },
-  toolCard: { minHeight: 86, borderRadius: 14, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#E1DDDA' }, toolLocked: { opacity: .5 }, toolIcon: { width: 54, height: 54, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, toolEmoji: { fontSize: 25, color: '#fff', fontFamily: fontFamily.bold }, toolText: { flex: 1, paddingHorizontal: 12 }, toolTitle: { fontFamily: fontFamily.bold, color: '#2A1A11', fontSize: 14 }, toolSub: { fontFamily: fontFamily.medium, color: '#80736C', fontSize: 11, lineHeight: 15, marginTop: 4 }, chev: { fontSize: 32, color: '#8B7D74' },
-  bought: { marginTop: 2 }, boughtRow: { minHeight: 64, borderRadius: 12, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, marginBottom: 8 }, boughtImg: { width: 52, height: 52 }, boughtText: { flex: 1, fontFamily: fontFamily.semiBold, color: '#2A1B13', paddingHorizontal: 8 }, done: { color: '#3E7B24', fontFamily: fontFamily.bold, fontSize: 20 },
+  root: { flex: 1, backgroundColor: '#F2F2F2' },
+  content: { paddingTop: 126, paddingHorizontal: 16, paddingBottom: 130 },
+  title: { fontFamily: fontFamily.bold, fontSize: 30, color: '#2B170B', marginBottom: 14 },
+  walletCard: { minHeight: 150, borderRadius: 18, backgroundColor: '#1764B4', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, overflow: 'hidden' },
+  piggy: { width: 132, height: 126 },
+  walletRight: { flex: 1, alignItems: 'center' },
+  walletValue: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 30 },
+  coin: { color: '#F2A900' },
+  walletActions: { flexDirection: 'row', gap: 7, marginTop: 12 },
+  walletButton: { minHeight: 36, borderRadius: 10, backgroundColor: '#fff', paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
+  walletButtonText: { fontFamily: fontFamily.bold, color: '#204E7F', fontSize: 11 },
+  simpleRow: { minHeight: 76, borderRadius: 14, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 13, marginTop: 12, borderWidth: 1, borderColor: '#E1DDDA' },
+  locked: { opacity: .48 },
+  planBars: { width: 50, height: 42, flexDirection: 'row', alignItems: 'flex-end', gap: 4, paddingHorizontal: 6 },
+  planBar: { width: 7, borderRadius: 4 },
+  simpleText: { flex: 1, paddingHorizontal: 10 },
+  simpleTitle: { fontFamily: fontFamily.bold, color: '#2A1A11', fontSize: 15 },
+  simpleSub: { fontFamily: fontFamily.medium, color: '#80736C', fontSize: 11, marginTop: 3 },
+  chev: { fontSize: 30, color: '#8B7D74' },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 22, marginBottom: 10 },
+  sectionTitle: { fontFamily: fontFamily.bold, fontSize: 19, color: '#28170E' },
+  addButton: { borderRadius: 10, backgroundColor: '#5B2E1D', paddingHorizontal: 12, paddingVertical: 9 },
+  addButtonText: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 11 },
+  goalRow: { gap: 10, paddingRight: 12 },
+  goalCard: { width: 272, minHeight: 110, borderRadius: 15, backgroundColor: '#fff', padding: 10, borderWidth: 1, borderColor: '#E2DEDB', flexDirection: 'row', alignItems: 'center' },
+  goalImage: { width: 82, height: 82 },
+  goalInfo: { flex: 1, paddingHorizontal: 8 },
+  goalName: { fontFamily: fontFamily.bold, fontSize: 14, color: '#2A1B13' },
+  goalMoney: { fontFamily: fontFamily.semiBold, color: '#745B49', fontSize: 11, marginTop: 6 },
+  progress: { height: 7, borderRadius: 4, backgroundColor: '#E6E1DD', marginTop: 8, overflow: 'hidden' },
+  progressFill: { height: '100%', backgroundColor: '#F4A91D' },
+  goalPlus: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#EFE6DF', alignItems: 'center', justifyContent: 'center' },
+  goalPlusText: { fontFamily: fontFamily.bold, color: '#5B2E1D', fontSize: 21, lineHeight: 22 },
+  emptyGoal: { minHeight: 110, borderRadius: 15, backgroundColor: '#fff', borderWidth: 2, borderColor: '#D7D0CB', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  emptyPlus: { fontFamily: fontFamily.medium, fontSize: 30, color: '#1764B4' },
+  emptyTitle: { fontFamily: fontFamily.bold, fontSize: 14, color: '#2A1B13' },
+  historyIcon: { width: 46, height: 46, borderRadius: 12, backgroundColor: '#4E82DB', alignItems: 'center', justifyContent: 'center' },
+  historyIconText: { color: '#fff', fontFamily: fontFamily.bold, fontSize: 24 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(40,20,10,.38)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  modalCard: { width: '100%', maxWidth: 360, borderRadius: 22, backgroundColor: '#F7F4F1', padding: 22, alignItems: 'center' },
+  modalAsset: { width: 92, height: 92, marginBottom: 9 },
+  modalTitle: { fontFamily: fontFamily.bold, fontSize: 22, lineHeight: 27, color: '#2A160A', textAlign: 'center' },
+  modalText: { fontFamily: fontFamily.medium, fontSize: 14, lineHeight: 20, color: '#6F6259', textAlign: 'center', marginTop: 10 },
+  modalButton: { width: '100%', minHeight: 52, borderRadius: 12, backgroundColor: '#3B1606', alignItems: 'center', justifyContent: 'center', marginTop: 20 },
+  modalButtonText: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 14 },
 });

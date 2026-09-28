@@ -1,9 +1,10 @@
-import kitchen from "@/assets/game/rooms/kitchen.png";
-import Plus from "@/assets/symbols/plus.svg";
+import kitchen from "@/assets/library/scenes/kitchen.png";
+import plusIcon from "@/assets/library/ui/plus.png";
 import type { PetColorId } from "@/content/petColors";
 import { FOOD_BY_ID, FOOD_ITEMS, type FoodId } from "@/game/catalog";
 import { GameHud } from "@/game/components/GameHud";
 import { PetWithHat } from "@/game/components/PetWithHat";
+import { TutorialHand } from "@/game/components/TutorialHand";
 import { showGameDialog } from "@/game/services/dialogService";
 import { useGameStore } from "@/game/store/gameStore";
 import { useProfileStore } from "@/store/profileStore";
@@ -12,6 +13,7 @@ import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  Image,
   ImageBackground,
   Pressable,
   StyleSheet,
@@ -20,6 +22,8 @@ import {
 
 export default function FoodScreen() {
   const inventory = useGameStore((s) => s.inventory);
+  const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const feed = useGameStore((s) => s.feed);
   const hunger = useGameStore((s) => s.hunger);
   const color = (useProfileStore((s) => s.petColorId) || "brown") as PetColorId;
@@ -76,6 +80,10 @@ export default function FoodScreen() {
       lift.setValue({ x: 0, y: 0 });
       scale.setValue(1);
       if (ok) {
+        if (tutorialStage === 4 && selectedItem.id === "apple") {
+          setTutorialStage(5);
+          setTimeout(() => router.replace("/(tabs)/home"), 250);
+        }
         const next = available.find(
           (item) =>
             item.id !== selectedItem.id && (inventory[item.id] ?? 0) > 0,
@@ -117,11 +125,13 @@ export default function FoodScreen() {
             ]}
             resizeMode="contain"
           />
+          {tutorialStage === 4 && selectedItem.id === "apple" ? <TutorialHand style={styles.plateHand} rotate="-15deg" /> : null}
         </Pressable>
       ) : (
         <View style={styles.inventoryPanel}>
-          <Pressable onPress={() => router.push("/food-shop")}>
-            <Plus />
+          <Pressable onPress={() => { if (tutorialStage === 2) setTutorialStage(3); router.push("/food-shop"); }} style={styles.plusWrap}>
+            <Image source={plusIcon} style={styles.plusIcon} resizeMode="contain" />
+            {tutorialStage === 2 ? <TutorialHand style={styles.plusHand} rotate="-18deg" /> : null}
           </Pressable>
         </View>
       )}
@@ -152,6 +162,10 @@ const styles = StyleSheet.create({
     height: 68,
     backgroundColor: "transparent",
   },
+  plusWrap: { position: "relative", width: 74, height: 74, alignItems: "center", justifyContent: "center" },
+  plusIcon: { width: 64, height: 64 },
+  plusHand: { top: -54, right: -35 },
+  plateHand: { top: 12, right: "28%" },
   inventoryPanel: {
     position: "absolute",
     left: 12,

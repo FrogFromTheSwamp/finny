@@ -20,7 +20,7 @@ export function rebalancePlan(plan: BudgetPlan, key: keyof BudgetPlan, nextValue
   return { ...plan, [key]: value, [others[0]!]: first, [others[1]!]: second } as BudgetPlan;
 }
 
-export function BudgetDonut({ plan, size = 190 }: { plan: BudgetPlan; size?: number }) {
+export function BudgetDonut({ plan, size = 190, centerMain = '100%', centerSub = 'бюджета' }: { plan: BudgetPlan; size?: number; centerMain?: string; centerSub?: string }) {
   const stroke = Math.max(22, Math.round(size * .18));
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -37,7 +37,7 @@ export function BudgetDonut({ plan, size = 190 }: { plan: BudgetPlan; size?: num
         return <Circle key={i} cx={size/2} cy={size/2} r={r} stroke={colors[i]} strokeWidth={stroke} fill="none" strokeDasharray={`${length} ${c-length}`} strokeDashoffset={dashOffset} rotation={-90} origin={`${size/2}, ${size/2}`} strokeLinecap="butt" />;
       })}
     </Svg>
-    <Text style={styles.donutMain}>100%</Text><Text style={styles.donutSub}>бюджета</Text>
+    <Text style={styles.donutMain}>{centerMain}</Text><Text style={styles.donutSub}>{centerSub}</Text>
   </View>;
 }
 

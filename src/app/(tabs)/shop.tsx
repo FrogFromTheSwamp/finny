@@ -1,20 +1,31 @@
+import wardrobeRoom from '@/assets/library/scenes/wardrobe.png';
 import leftArrow from '@/assets/library/ui/arrows/left.png';
 import rightArrow from '@/assets/library/ui/arrows/right.png';
-import categoryHatIcon from '@/assets/library/wardrobe/categories/hats.png';
-import wardrobeRoom from '@/assets/library/scenes/wardrobe.png';
 import type { PetColorId } from '@/content/petColors';
 import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
 import { GameHud } from '@/game/components/GameHud';
 import { PetWithHat } from '@/game/components/PetWithHat';
 import { TutorialHand } from '@/game/components/TutorialHand';
 import { showGameDialog } from '@/game/services/dialogService';
+import { sessionUi } from '@/game/sessionUi';
 import { useGameStore } from '@/game/store/gameStore';
 import { HATS } from '@/game/wardrobe';
 import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Image, ImageBackground, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import type { ImageSourcePropType } from 'react-native';
+import { Animated, Image, ImageBackground, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+
+function HatPreview({ source }: { source: ImageSourcePropType }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [opacity]);
+  return <Animated.Image source={source} style={[styles.itemImage, { opacity }]} resizeMode="contain" />;
+}
 
 export default function WardrobeShopScreen() {
   const router = useRouter();
@@ -25,35 +36,47 @@ export default function WardrobeShopScreen() {
   const equipHat = useGameStore((s) => s.equipHat);
   const purchaseHat = useGameStore((s) => s.purchaseHat);
   const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const grown = useGameStore((s) => s.completedChapters.includes('budget'));
   const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const goals = useGameStore((s) => s.goals);
   const addGoal = useGameStore((s) => s.addGoal);
   const [shortageOpen, setShortageOpen] = useState(false);
+  const actionRef = useRef(false);
   const [index, setIndex] = useState(() => {
     const found = HATS.findIndex((h) => h.id === equippedHat);
-    return found === -1 ? 0 : found;
+    return sessionUi.wardrobeIndex !== null && sessionUi.wardrobeIndex >= 0 && sessionUi.wardrobeIndex < HATS.length
+      ? sessionUi.wardrobeIndex
+      : (found === -1 ? 0 : found);
   });
+  const indexRef = useRef(index);
 
   useEffect(() => {
     if (tutorialStage === 6) {
       const dotted = HATS.findIndex((h) => h.id === 'dotted');
-      if (dotted >= 0) setIndex(dotted);
+      if (dotted >= 0) {
+        indexRef.current = dotted;
+        setIndex(dotted);
+      }
     }
   }, [tutorialStage]);
 
   const hat = HATS[index]!;
+  useEffect(() => { sessionUi.wardrobeIndex = index; }, [index]);
   const owned = hat.id === 'none' || ownedHats.includes(hat.id);
   const shortage = Math.max(0, hat.price - coins);
 
   const move = (delta: number) => {
-    if (tutorialStage === 6) return;
-    const next = (index + delta + HATS.length) % HATS.length;
+    const next = (indexRef.current + delta + HATS.length) % HATS.length;
+    indexRef.current = next;
     setIndex(next);
     const nextHat = HATS[next]!;
     if (nextHat.id === 'none' || ownedHats.includes(nextHat.id)) equipHat(nextHat.id);
   };
 
   const handleBuy = () => {
+    if (actionRef.current) return;
+    actionRef.current = true;
+    setTimeout(() => { actionRef.current = false; }, 450);
     if (hat.id === 'none') {
       equipHat('none');
       return;
@@ -95,14 +118,13 @@ export default function WardrobeShopScreen() {
     <View style={styles.root}>
       <ImageBackground source={wardrobeRoom} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <GameHud showHunger={false} />
-      <View style={styles.petArea}><PetWithHat color={color} hatId={hat.id} /></View>
-      <View style={styles.categoryIcon}><Image source={categoryHatIcon} style={styles.categoryIconImage} resizeMode="contain" /></View>
+      <View style={[styles.petArea, grown && styles.grownPetArea]}><PetWithHat color={color} hatId={hat.id} /></View>
       <View style={styles.categoryBox}>
         <Pressable onPress={() => move(-1)} style={styles.arrow} accessibilityLabel="Предыдущая вещь">
           <Image source={leftArrow} style={styles.arrowImage} resizeMode="contain" />
         </Pressable>
         <Pressable onPress={handleBuy} style={styles.itemSlot} accessibilityRole="button" accessibilityLabel={hat.name}>
-          {hat.previewImage ? <Image source={hat.previewImage} style={styles.itemImage} resizeMode="contain" /> : <Text style={styles.noneLabel}>Без шляпки</Text>}
+          {hat.previewImage ? <HatPreview key={hat.id} source={hat.previewImage} /> : <Text style={styles.noneLabel}>Без шляпки</Text>}
           {!owned && hat.price > 0 ? (
             <View style={styles.price}><Text style={styles.priceText}>{hat.price}</Text><Text style={styles.priceCoin}>●</Text></View>
           ) : owned && hat.id !== 'none' ? <Text style={styles.ownedLabel}>Есть</Text> : null}
@@ -137,8 +159,7 @@ export default function WardrobeShopScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   petArea: { position: 'absolute', left: 0, right: 0, bottom: '22%', alignItems: 'center' },
-  categoryIcon: { position: 'absolute', top: '38%', right: 24, width: 58, height: 58, alignItems: 'center', justifyContent: 'center' },
-  categoryIconImage: { width: '100%', height: '100%' },
+  grownPetArea: { transform: [{ scale: 0.86 }] },
   categoryBox: { position: 'absolute', left: 14, right: 14, bottom: 110, height: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   arrow: { width: 52, height: 58, alignItems: 'center', justifyContent: 'center' },
   arrowImage: { width: 48, height: 50 },

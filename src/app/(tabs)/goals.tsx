@@ -1,12 +1,24 @@
 import piggy from '@/assets/library/learning/items/piggy-bank-5.png';
 import partyHat from '@/assets/library/wardrobe/items/blue-dotted-hat.png';
 import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
+import { AnimatedNumber } from '@/game/components/AnimatedNumber';
 import { GameHud } from '@/game/components/GameHud';
 import { useGameStore } from '@/game/store/gameStore';
+import { sessionUi } from '@/game/sessionUi';
 import { fontFamily } from '@/ui/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+
+function GoalProgress({ percent }: { percent: number }) {
+  const value = useRef(new Animated.Value(percent)).current;
+  useEffect(() => {
+    const animation = Animated.timing(value, { toValue: percent, duration: 220, useNativeDriver: false });
+    animation.start();
+    return () => animation.stop();
+  }, [percent, value]);
+  return <View style={styles.progress}><Animated.View style={[styles.progressFill, { width: value.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] }) }]} /></View>;
+}
 
 export default function GoalsScreen() {
   const router = useRouter();
@@ -28,8 +40,22 @@ export default function GoalsScreen() {
   const [amountText, setAmountText] = useState('');
   const [transferError, setTransferError] = useState('');
   const openingFirstLessonRef = useRef(false);
+  const transferRef = useRef(false);
+  const buyingGoalRef = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const cardsScrollRef = useRef<ScrollView>(null);
+  const initialScrollY = useRef(sessionUi.goalsScrollY).current;
+  const initialCardsScrollX = useRef(sessionUi.goalsCardsScrollX).current;
+  const scrollRestoredRef = useRef(false);
+  const cardsRestoredRef = useRef(false);
   const [openingFirstLesson, setOpeningFirstLesson] = useState(false);
-  const activeGoals = goals.filter((g) => !g.purchasedAt);
+  const purchasedTemplates = new Set(goals.filter((g) => !!g.purchasedAt).map((g) => g.templateId));
+  const shownTemplates = new Set<string>();
+  const activeGoals = goals.filter((g) => {
+    if (g.purchasedAt || purchasedTemplates.has(g.templateId) || shownTemplates.has(g.templateId)) return false;
+    shownTemplates.add(g.templateId);
+    return true;
+  });
   const planUnlocked = completedChapters.includes('budget');
   const readyHatGoal = useMemo(() => activeGoals.find((g) => g.templateId === 'party-hat' && piggyBalance >= g.target), [activeGoals, piggyBalance]);
 
@@ -43,6 +69,12 @@ export default function GoalsScreen() {
   }, [tutorialStage, goals]);
 
   useEffect(() => {
+    if (tutorialStage !== 7) return;
+    void import('@/features/learning/lessonFlows');
+    router.prefetch({ pathname: '/lesson/[id]', params: { id: 'budget-1' } });
+  }, [router, tutorialStage]);
+
+  useEffect(() => {
     if (readyHatGoal && !milestonesSeen.includes('party-hat-ready') && tutorialStage >= 8) setGoalReadyOpen(true);
   }, [readyHatGoal, milestonesSeen, tutorialStage]);
 
@@ -52,19 +84,23 @@ export default function GoalsScreen() {
     setOpeningFirstLesson(true);
     setFirstGoalOpen(false);
     setTutorialStage(8);
-    router.push({ pathname: '/lesson/[id]', params: { id: 'budget-1' } });
+    router.navigate({ pathname: '/lesson/[id]', params: { id: 'budget-1' } });
   };
 
   const openTransfer = (kind: 'in' | 'out') => {
+    transferRef.current = false;
     setTransfer(kind);
     setAmountText('');
     setTransferError('');
   };
 
   const submitTransfer = () => {
+    if (transferRef.current) return;
+    transferRef.current = true;
     const value = Math.round(Number(amountText));
     const ok = transfer === 'in' ? depositPiggy(value) : transfer === 'out' ? withdrawPiggy(value) : false;
     if (!ok) {
+      transferRef.current = false;
       setTransferError(transfer === 'in' ? 'На счёте нет такой суммы.' : 'В копилке нет такой суммы.');
       return;
     }
@@ -72,7 +108,12 @@ export default function GoalsScreen() {
   };
 
   const tryHat = () => {
-    if (readyHatGoal) purchaseGoal(readyHatGoal.id);
+    if (buyingGoalRef.current || !readyHatGoal) return;
+    buyingGoalRef.current = true;
+    if (!purchaseGoal(readyHatGoal.id)) {
+      buyingGoalRef.current = false;
+      return;
+    }
     markMilestoneSeen('party-hat-ready');
     setGoalReadyOpen(false);
     router.replace('/(tabs)/shop');
@@ -81,12 +122,12 @@ export default function GoalsScreen() {
   return (
     <View style={styles.root}>
       <GameHud showHunger={false} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} onContentSizeChange={() => { if (!scrollRestoredRef.current) { scrollRestoredRef.current = true; scrollRef.current?.scrollTo({ y: initialScrollY, animated: false }); } }} onScroll={(event) => { sessionUi.goalsScrollY = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={32} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Копилка</Text>
         <View style={styles.walletCard}>
           <Image source={piggy} style={styles.piggy} resizeMode="contain" />
           <View style={styles.walletRight}>
-            <Text style={styles.walletValue}>{piggyBalance} <Text style={styles.coin}>●</Text></Text>
+            <View style={styles.walletValueRow}><AnimatedNumber value={piggyBalance} style={styles.walletValue} /><Text style={[styles.walletValue, styles.coin]}>●</Text></View>
             <Text style={styles.walletAccount}>На счёте {coins} ●</Text>
             <View style={styles.walletActions}>
               <Pressable style={styles.walletButton} onPress={() => openTransfer('in')}><Text style={styles.walletButtonText}>↑ Пополнить</Text></Pressable>
@@ -95,30 +136,30 @@ export default function GoalsScreen() {
           </View>
         </View>
 
-        <Pressable disabled={!planUnlocked} onPress={() => router.push('/budget-plan')} style={[styles.simpleRow, !planUnlocked && styles.locked]}>
+        <Pressable disabled={!planUnlocked} onPress={() => router.navigate('/budget-plan')} style={[styles.simpleRow, !planUnlocked && styles.locked]}>
           <View style={styles.planBars}><View style={[styles.planBar, { height: 24, backgroundColor: '#F8AE28' }]} /><View style={[styles.planBar, { height: 18, backgroundColor: '#D52C7D' }]} /><View style={[styles.planBar, { height: 12, backgroundColor: '#4E82DB' }]} /></View>
           <View style={styles.simpleText}><Text style={styles.simpleTitle}>План расходов</Text><Text style={styles.simpleSub}>{planUnlocked ? 'Нужно · Хочу · Отложу' : 'Откроется после первой главы'}</Text></View><Text style={styles.chev}>›</Text>
         </Pressable>
 
-        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Цели</Text><Pressable style={styles.addButton} onPress={() => router.push('/goal-editor')}><Text style={styles.addButtonText}>Добавить цель</Text></Pressable></View>
+        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Цели</Text><Pressable style={styles.addButton} onPress={() => router.navigate('/goal-editor')}><Text style={styles.addButtonText}>Добавить цель</Text></Pressable></View>
         {activeGoals.length ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
+          <ScrollView ref={cardsScrollRef} horizontal onContentSizeChange={() => { if (!cardsRestoredRef.current) { cardsRestoredRef.current = true; cardsScrollRef.current?.scrollTo({ x: initialCardsScrollX, animated: false }); } }} onScroll={(event) => { sessionUi.goalsCardsScrollX = event.nativeEvent.contentOffset.x; }} scrollEventThrottle={32} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
             {activeGoals.map((goal) => {
               const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
               const affordable = piggyBalance >= goal.target;
               const pct = Math.min(100, Math.round((piggyBalance / goal.target) * 100));
-              return <Pressable key={goal.id} onPress={() => router.push({ pathname: '/goal-detail', params: { id: goal.id } })} style={styles.goalCard}>
+              return <Pressable key={goal.id} onPress={() => router.navigate({ pathname: '/goal-detail', params: { id: goal.id } })} style={styles.goalCard}>
                 <Image source={template.image} style={styles.goalImage} resizeMode="contain" />
-                <View style={styles.goalInfo}><Text style={styles.goalName} numberOfLines={2}>{goal.name}</Text><Text style={styles.goalMoney}>{goal.target} <Text style={styles.coin}>●</Text></Text><Text style={styles.goalStatus}>{affordable ? 'Можно купить из копилки' : `Не хватает ${goal.target - piggyBalance}`}</Text><View style={styles.progress}><View style={[styles.progressFill, { width: `${pct}%` }]} /></View></View>
+                <View style={styles.goalInfo}><Text style={styles.goalName} numberOfLines={2}>{goal.name}</Text><Text style={styles.goalMoney}>{goal.target} <Text style={styles.coin}>●</Text></Text><Text style={styles.goalStatus}>{affordable ? 'Можно купить из копилки' : `Не хватает ${goal.target - piggyBalance}`}</Text><GoalProgress percent={pct} /></View>
                 <Text style={styles.chev}>›</Text>
               </Pressable>;
             })}
           </ScrollView>
         ) : (
-          <Pressable onPress={() => router.push('/goal-editor')} style={styles.emptyGoal}><Text style={styles.emptyPlus}>＋</Text><Text style={styles.emptyTitle}>Добавь первую цель</Text></Pressable>
+          <Pressable onPress={() => router.navigate('/goal-editor')} style={styles.emptyGoal}><Text style={styles.emptyPlus}>＋</Text><Text style={styles.emptyTitle}>Добавь первую цель</Text></Pressable>
         )}
 
-        <Pressable onPress={() => router.push('/history')} style={styles.simpleRow}>
+        <Pressable onPress={() => router.navigate('/history')} style={styles.simpleRow}>
           <View style={styles.historyIcon}><Text style={styles.historyIconText}>↻</Text></View>
           <View style={styles.simpleText}><Text style={styles.simpleTitle}>История покупок</Text><Text style={styles.simpleSub}>{transactions.length ? `${transactions.length} операций` : 'Пока операций нет'}</Text></View><Text style={styles.chev}>›</Text>
         </Pressable>
@@ -162,13 +203,14 @@ const styles = StyleSheet.create({
   content: { paddingTop: 126, paddingHorizontal: 16, paddingBottom: 130 },
   title: { fontFamily: fontFamily.bold, fontSize: 30, color: '#2B170B', marginBottom: 14 },
   walletCard: { minHeight: 150, borderRadius: 18, backgroundColor: '#1764B4', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, overflow: 'hidden' },
-  piggy: { width: 132, height: 126 },
-  walletRight: { flex: 1, alignItems: 'center' },
+  piggy: { width: 108, height: 112 },
+  walletRight: { flex: 1, minWidth: 0, alignItems: 'center' },
   walletValue: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 30 },
+  walletValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   walletAccount: { fontFamily: fontFamily.medium, color: '#D6E6F6', fontSize: 11, marginTop: 2 },
   coin: { color: '#F2A900' },
-  walletActions: { flexDirection: 'row', gap: 7, marginTop: 12 },
-  walletButton: { minHeight: 36, borderRadius: 10, backgroundColor: '#fff', paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center' },
+  walletActions: { width: '100%', flexDirection: 'row', gap: 5, marginTop: 12 },
+  walletButton: { flex: 1, minHeight: 36, borderRadius: 10, backgroundColor: '#fff', paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
   walletButtonText: { fontFamily: fontFamily.bold, color: '#204E7F', fontSize: 11 },
   simpleRow: { minHeight: 76, borderRadius: 14, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 13, marginTop: 12, borderWidth: 1, borderColor: '#E1DDDA' },
   locked: { opacity: .48 },

@@ -35,6 +35,7 @@ export default function ChapterCompleteScreen() {
   const alreadyDistributed = milestones.includes(distributionKey);
   const rewardClaimed = claimedChapterRewards.includes(chapterId);
   const [stage, setStage] = useState(0);
+  const [sliderDragging, setSliderDragging] = useState(false);
   const [plan, setPlan] = useState<BudgetPlan>(storedPlan);
   const [distributionBalance, setDistributionBalance] = useState(coins);
   const stageActionRef = useRef(false);
@@ -100,14 +101,14 @@ export default function ChapterCompleteScreen() {
       <View style={styles.donut}>
         <BudgetDonut plan={plan} size={176} centerMain={`${distributionBalance}`} centerSub="монет" />
       </View>
-      <PlanSliders plan={plan} onChange={setPlan} />
+      <PlanSliders plan={plan} onChange={setPlan} onDragChange={setSliderDragging} />
       <Text style={styles.note}>Отметки 50 / 30 / 20 — ориентир. Часть «Отложу», {savedPart} монет, переведётся со счёта в копилку.</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'bottom']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView scrollEnabled={!sliderDragging} canCancelContentTouches={!sliderDragging} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {stage === 0 ? (
           <>
             <Text style={styles.kicker}>Конец главы!</Text>

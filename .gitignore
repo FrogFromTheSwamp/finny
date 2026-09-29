@@ -63,6 +63,8 @@ screenshots
 .vscode
 .claude
 
-# Local design drops. Runtime art lives in src/assets/library.
 Finnie App correct
 Cloud.svg
+
+.expo-web-check
+.playwright-cli

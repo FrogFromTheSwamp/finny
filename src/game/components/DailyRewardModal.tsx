@@ -82,7 +82,7 @@ export function DailyRewardModal({
       }}
     >
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+        <ScrollView style={[styles.sheet, { maxHeight: height * 0.86 }]} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 18 }} bounces={false} showsVerticalScrollIndicator={false}>
           {!mandatory ? (
             <Pressable
               style={styles.close}
@@ -151,7 +151,7 @@ export function DailyRewardModal({
               {canClaim ? "Забрать награду" : "Награда уже получена"}
             </Text>
           </Pressable>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );

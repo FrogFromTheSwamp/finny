@@ -3,26 +3,28 @@ import leftArrow from "@/assets/library/ui/arrows/left.png";
 import rightArrow from "@/assets/library/ui/arrows/right.png";
 import shelfPlank from "@/assets/library/ui/shelf.png";
 import {
-    FOOD_BY_ID,
-    FOOD_CATEGORIES,
-    FOOD_ITEMS,
-    type FoodCategoryId,
-    type FoodId,
+  FOOD_BY_ID,
+  FOOD_CATEGORIES,
+  FOOD_ITEMS,
+  type FoodCategoryId,
+  type FoodId,
 } from "@/game/catalog";
 import { TutorialHand } from "@/game/components/TutorialHand";
+import { AnimatedNumber } from "@/game/components/AnimatedNumber";
 import { showGameDialog } from "@/game/services/dialogService";
 import { useGameStore } from "@/game/store/gameStore";
+import { sessionUi } from "@/game/sessionUi";
 import { fontFamily } from "@/ui/theme";
 import { useRouter } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-    Animated,
-    Image,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Animated,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -35,12 +37,15 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 export default function FoodShopScreen() {
   const router = useRouter();
-  const [category, setCategory] = useState<FoodCategoryId>("fruits");
+  const [category, setCategory] = useState<FoodCategoryId>(() =>
+    FOOD_CATEGORIES.find((item) => item.id === sessionUi.foodCategory)?.id ?? "fruits",
+  );
   const [basketItems, setBasketItems] = useState<FoodId[]>([]);
   const [flyingFood, setFlyingFood] = useState<FoodId | null>(null);
   const rootRef = useRef<View>(null);
   const basketRef = useRef<View>(null);
   const productRefs = useRef<Partial<Record<FoodId, View | null>>>({});
+  const buyingRef = useRef(false);
   const flightX = useRef(new Animated.Value(0)).current;
   const flightY = useRef(new Animated.Value(0)).current;
   const coins = useGameStore((s) => s.coins);
@@ -52,6 +57,7 @@ export default function FoodShopScreen() {
     () => FOOD_ITEMS.filter((item) => item.category === category),
     [category],
   );
+  useEffect(() => { sessionUi.foodCategory = category; }, [category]);
   const categoryIndex = FOOD_CATEGORIES.findIndex(
     (item) => item.id === category,
   );
@@ -61,10 +67,13 @@ export default function FoodShopScreen() {
     setCategory(FOOD_CATEGORIES[next]!.id);
   };
   const buy = (foodId: FoodId, name: string, price: number) => {
+    if (buyingRef.current) return;
+    buyingRef.current = true;
     if (!purchaseFood(foodId)) {
       showGameDialog(`${name} стоит ${price} монет, а у тебя ${coins}.`, {
         title: "Не хватает монет",
       });
+      setTimeout(() => { buyingRef.current = false; }, 450);
       return;
     }
 
@@ -75,6 +84,7 @@ export default function FoodShopScreen() {
     const root = rootRef.current;
     if (!product || !basket || !root) {
       setBasketItems((current) => [...current, foodId]);
+      buyingRef.current = false;
       return;
     }
 
@@ -107,9 +117,10 @@ export default function FoodShopScreen() {
                   duration: 420,
                   useNativeDriver: true,
                 }),
-              ]).start(({ finished }) => {
-                if (finished) setBasketItems((current) => [...current, foodId]);
+              ]).start(() => {
+                setBasketItems((current) => [...current, foodId]);
                 setFlyingFood(null);
+                buyingRef.current = false;
               });
             },
           );
@@ -139,7 +150,7 @@ export default function FoodShopScreen() {
         </Pressable>
         <Text style={styles.title}>Продукты</Text>
         <View style={styles.balance}>
-          <Text style={styles.balanceText}>{coins}</Text>
+          <AnimatedNumber value={coins} style={styles.balanceText} />
           <Text style={styles.coin}>●</Text>
         </View>
       </View>

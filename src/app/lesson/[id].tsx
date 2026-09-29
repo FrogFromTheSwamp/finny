@@ -27,6 +27,7 @@ import {
 } from '@/features/learning/lessonFlows';
 import { PetWithHat } from '@/game/components/PetWithHat';
 import { useGameStore } from '@/game/store/gameStore';
+import { sessionUi } from '@/game/sessionUi';
 import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -71,7 +72,8 @@ export default function LessonScreen() {
   const completeLesson = useGameStore((s) => s.completeLesson);
   const goals = useGameStore((s) => s.goals);
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
-  const [index, setIndex] = useState(0);
+  const restoredStep = () => Math.min(Math.max(0, sessionUi.lessonStep[lessonId] ?? 0), Math.max(0, flow.length - 1));
+  const [index, setIndex] = useState(restoredStep);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [numberValue, setNumberValue] = useState('');
@@ -84,6 +86,7 @@ export default function LessonScreen() {
   const finished = useRef(false);
   const goalBaseline = useRef<number | null>(null);
   const pendingGoal = useRef(false);
+  const advancingRef = useRef(false);
   const priorityRef = useRef<PriorityHandle>(null);
   const payRef = useRef<PayHandle>(null);
   const scrollRef = useRef<ScrollView>(null);
@@ -96,13 +99,14 @@ export default function LessonScreen() {
   const finish = useCallback(() => {
     if (!lesson || finished.current) return;
     finished.current = true;
+    delete sessionUi.lessonStep[lesson.id];
     const accuracy = Math.max(60, 100 - mistakesRef.current * 20);
     completeLesson(lesson.id, accuracy);
     router.replace({ pathname: '/lesson-complete', params: { lesson: lesson.id } });
   }, [completeLesson, lesson, router]);
 
   useEffect(() => {
-    setIndex(0);
+    setIndex(restoredStep());
     setSheet(null);
     setSelected([]);
     setNumberValue('');
@@ -117,6 +121,10 @@ export default function LessonScreen() {
   }, [lessonId]);
 
   useEffect(() => {
+    sessionUi.lessonStep[lessonId] = index;
+  }, [index, lessonId]);
+
+  useEffect(() => {
     setSheet(null);
     setSelected([]);
     setNumberValue('');
@@ -126,10 +134,14 @@ export default function LessonScreen() {
     setScrollEnabled(true);
   }, [index]);
 
+  useEffect(() => {
+    advancingRef.current = false;
+  }, [index, cardIndex, sheet]);
+
   useFocusEffect(useCallback(() => {
-    if (pendingGoal.current && goalBaseline.current !== null && goals.length > goalBaseline.current) {
+    if (pendingGoal.current) {
       pendingGoal.current = false;
-      finish();
+      if (goalBaseline.current !== null && goals.length > goalBaseline.current) finish();
     }
   }, [finish, goals.length]));
 
@@ -149,6 +161,7 @@ export default function LessonScreen() {
   const progress = step.kind === 'swipe'
     ? (index + (cardIndex + 1) / step.cards.length) / flow.length
     : (index + 1) / flow.length;
+  const interactiveStep = !sheet && ['shop', 'priority', 'swipe', 'pick', 'weekly', 'sort', 'pay'].includes(step.kind);
 
   const openSheet = (next: Sheet) => setSheet(next);
 
@@ -332,6 +345,8 @@ export default function LessonScreen() {
     if (sheet) {
       if (sheet.go === 'finish') finish();
       else if (sheet.go === 'next-card') {
+        if (advancingRef.current) return;
+        advancingRef.current = true;
         setCardIndex((value) => value + 1);
         setSheet(null);
       } else setSheet(null);
@@ -355,12 +370,15 @@ export default function LessonScreen() {
       return;
     }
     if (step.kind === 'goal') {
+      if (pendingGoal.current) return;
       goalBaseline.current = goals.length;
       pendingGoal.current = true;
-      router.push('/goal-editor');
+      router.navigate('/goal-editor');
       return;
     }
     if (step.kind === 'pick' || step.kind === 'cover' || step.kind === 'story' || step.kind === 'groups') {
+      if (advancingRef.current) return;
+      advancingRef.current = true;
       setIndex((value) => value + 1);
     }
   };
@@ -382,14 +400,14 @@ export default function LessonScreen() {
         <Pressable onPress={() => router.back()} style={styles.close} accessibilityLabel="Закрыть урок">
           <Image source={closeIcon} style={styles.closeIcon} resizeMode="contain" />
         </Pressable>
-        <View style={styles.track}><View style={[styles.fill, { width: `${Math.max(8, Math.round(progress * 100))}%` }]} /></View>
+        <View style={styles.track}><AnimatedProgressFill progress={Math.max(0.08, progress)} /></View>
       </View>
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={styles.content}
-        scrollEnabled={scrollEnabled}
-        canCancelContentTouches={scrollEnabled}
+        scrollEnabled={scrollEnabled && !interactiveStep}
+        canCancelContentTouches={scrollEnabled && !interactiveStep}
         keyboardShouldPersistTaps="handled"
       >
         {sheet ? <ResultView sheet={sheet} /> : <StepBody
@@ -420,12 +438,22 @@ export default function LessonScreen() {
       </ScrollView>
       {showFooter ? <View style={styles.footer}><FinnyButton label={footerLabel()} onPress={onFooter} /></View> : null}
       {showArrow ? (
-        <Pressable style={styles.arrowButton} onPress={() => setIndex((value) => value + 1)} accessibilityLabel="Дальше">
+        <Pressable style={styles.arrowButton} onPress={() => { if (advancingRef.current) return; advancingRef.current = true; setIndex((value) => value + 1); }} accessibilityLabel="Дальше">
           <Image source={nextIcon} style={styles.arrowIcon} resizeMode="contain" />
         </Pressable>
       ) : null}
     </SafeAreaView>
   );
+}
+
+function AnimatedProgressFill({ progress }: { progress: number }) {
+  const value = useRef(new Animated.Value(progress)).current;
+  useEffect(() => {
+    const animation = Animated.timing(value, { toValue: progress, duration: 220, useNativeDriver: false });
+    animation.start();
+    return () => animation.stop();
+  }, [progress, value]);
+  return <Animated.View style={[styles.fill, { width: value.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]} />;
 }
 
 function StepBody({
@@ -456,9 +484,9 @@ function StepBody({
         <Text style={styles.title}>{step.title}</Text>
         {step.body ? <Text style={styles.body}>{step.body}</Text> : null}
         {step.kind === 'cover' && step.week ? <WeekRow /> : null}
-        <ArtView art={step.art} color={color} />
+        <ArtView art={step.art} color={color} compact={step.kind === 'cover' && !!step.marks} />
         {step.kind === 'cover' && step.marks ? (
-          <View style={styles.marks}>
+          <View style={[styles.marks, styles.marksCompact]}>
             <Image source={crossArt} style={styles.mark} resizeMode="contain" />
             <View style={styles.markDivider} />
             <Image source={checkArt} style={styles.mark} resizeMode="contain" />
@@ -578,12 +606,12 @@ function StepBody({
   return null;
 }
 
-function ArtView({ art, color }: { art?: Art; color: PetColorId }) {
+function ArtView({ art, color, compact = false }: { art?: Art; color: PetColorId; compact?: boolean }) {
   if (!art) return null;
   if (art === 'pet') {
-    return <View style={styles.pet}><PetWithHat color={color} emotion="happy" forceChild /></View>;
+    return <View style={[styles.pet, compact && styles.petCompact]}><PetWithHat color={color} emotion="happy" forceChild /></View>;
   }
-  return <Image source={art} style={styles.hero} resizeMode="contain" />;
+  return <Image source={art} style={[styles.hero, compact && styles.heroCompact]} resizeMode="contain" />;
 }
 
 function WeekRow() {
@@ -1101,13 +1129,16 @@ const styles = StyleSheet.create({
   title: { fontFamily: fontFamily.bold, fontSize: 26, color: '#24160F', lineHeight: 32 },
   body: { marginTop: 12, fontFamily: fontFamily.medium, fontSize: 16, lineHeight: 22, color: '#3C312B' },
   hero: { width: '100%', height: 230, marginTop: 22 },
+  heroCompact: { height: 160, marginTop: 8 },
   heroCard: { width: '100%', height: 180, marginBottom: 8 },
   pet: { height: 230, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  petCompact: { height: 175, marginTop: 0 },
   week: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
   weekDay: { alignItems: 'center', gap: 6 },
   weekDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E7E2DE' },
   weekLabel: { fontFamily: fontFamily.medium, fontSize: 11, color: '#6D625B' },
   marks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 22, marginTop: 18 },
+  marksCompact: { marginTop: 2 },
   mark: { width: 64, height: 64 },
   markDivider: { width: 1, height: 36, backgroundColor: '#D5D0CC' },
   group: { marginTop: 16 },

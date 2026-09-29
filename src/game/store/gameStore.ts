@@ -384,6 +384,8 @@ export const useGameStore = create<GameState>()(
         set({ budgetPlan: { need, want, save: 100 - need - want } });
       },
       addGoal: (templateId, name, target) => {
+        const existing = get().goals.find((goal) => goal.templateId === templateId);
+        if (existing) return existing;
         const goal: GoalRecord = {
           id: `${templateId}-${Date.now()}`,
           templateId,
@@ -423,7 +425,7 @@ export const useGameStore = create<GameState>()(
       },
       purchaseGoal: (goalId) => {
         const goal = get().goals.find((g) => g.id === goalId);
-        if (!goal || goal.purchasedAt || get().piggy < goal.target) return false;
+        if (!goal || goal.purchasedAt || get().piggy < goal.target || get().goals.some((g) => g.templateId === goal.templateId && !!g.purchasedAt)) return false;
         set((state) => ({
           piggy: state.piggy - goal.target,
           goals: state.goals.map((g) =>

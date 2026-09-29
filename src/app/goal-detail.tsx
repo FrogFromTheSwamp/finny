@@ -13,7 +13,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function GoalDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const goal = useGameStore((s) => s.goals.find((g) => g.id === String(id)));
+  const goals = useGameStore((s) => s.goals);
+  const goal = goals.find((g) => g.id === String(id));
+  const alreadyPurchased = goals.some((g) => g.id !== goal?.id && g.templateId === goal?.templateId && !!g.purchasedAt);
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
   const piggyBalance = useGameStore((s) => s.piggy);
   const purchase = useGameStore((s) => s.purchaseGoal);
@@ -36,7 +38,7 @@ export default function GoalDetailScreen() {
   const template = GOAL_TEMPLATE_BY_ID[goal.templateId];
   const affordable = piggyBalance >= goal.target;
   const pct = Math.min(100, Math.round((piggyBalance / goal.target) * 100));
-  const doPurchase = () => { if (!purchase(goal.id)) Alert.alert('Пока рано', 'В копилке не хватает монет на эту покупку.'); };
+  const doPurchase = () => { if (!purchase(goal.id)) Alert.alert('Пока рано', 'Проверь баланс копилки и не куплен ли уже этот товар.'); };
 
   if (goal.purchasedAt) return <SafeAreaView style={styles.root}>
     <Pressable onPress={() => router.back()}><Text style={styles.back}>‹</Text></Pressable>
@@ -55,7 +57,7 @@ export default function GoalDetailScreen() {
       <Text style={styles.money}>Цена {goal.target} ●</Text>
       <View style={styles.progress}><View style={[styles.fill, { width: `${pct}%` }]} /></View>
       <Text style={styles.hint}>В копилке {piggyBalance} ●. Деньги цели не принадлежат: это общий запас, из которого можно купить товар.</Text>
-      {affordable ? <FinnyButton label="Купить из копилки" onPress={doPurchase} style={styles.buy}/> : <Text style={styles.remaining}>Не хватает {goal.target - piggyBalance} ●</Text>}
+      {alreadyPurchased ? <Text style={styles.remaining}>Этот товар уже куплен</Text> : affordable ? <FinnyButton label="Купить из копилки" onPress={doPurchase} style={styles.buy}/> : <Text style={styles.remaining}>Не хватает {goal.target - piggyBalance} ●</Text>}
       <Pressable onPress={() => Alert.alert('Удалить цель?', 'Товар пропадёт из списка. Деньги в копилке останутся.', [{ text: 'Отмена', style: 'cancel' }, { text: 'Удалить', style: 'destructive', onPress: () => { remove(goal.id); router.back(); } }])}><Text style={styles.delete}>Удалить цель</Text></Pressable>
     </View>
   </SafeAreaView>;

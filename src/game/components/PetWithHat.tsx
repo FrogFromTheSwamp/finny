@@ -1,9 +1,10 @@
-import type { StyleProp, ViewStyle } from 'react-native';
-import { Image, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 import type { PetColorId } from '@/content/petColors';
 import { PetSprite, type PetEmotion } from '@/game/components/PetSprite';
 import { useGameStore } from '@/game/store/gameStore';
-import { HAT_BY_ID, type HatId } from '@/game/wardrobe';
+import { HAT_BY_ID, type HatAttachment, type HatId } from '@/game/wardrobe';
 
 type Props = {
   color: PetColorId;
@@ -27,22 +28,26 @@ export function PetWithHat({ color, emotion, isEating, onPress, style, hatId, fo
       <PetSprite color={color} grown={grown} emotion={emotion} isEating={isEating} onPress={onPress} style={styles.pet} />
       {hat.wornImage && hat.attachment ? (
         <View pointerEvents="none" style={styles.hatLayer}>
-          <Image
-            source={hat.wornImage}
-            resizeMode="contain"
-            style={[
-              styles.hat,
-              grown && styles.grownHat,
-              hat.attachment.align === 'right'
-                ? (grown ? styles.grownHatRight : styles.hatRight)
-                : (grown ? styles.grownHatCenter : styles.hatCenter),
-              { transform: [{ rotate: `${hat.attachment.rotation}deg` }] },
-            ]}
-          />
+          <WornHat key={hat.id} source={hat.wornImage} attachment={hat.attachment} grown={grown} />
         </View>
       ) : null}
     </View>
   );
+}
+
+function WornHat({ source, attachment, grown }: { source: ImageSourcePropType; attachment: HatAttachment; grown: boolean }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const animation = Animated.timing(opacity, { toValue: 1, duration: 180, useNativeDriver: true });
+    animation.start();
+    return () => animation.stop();
+  }, [opacity]);
+  return <Animated.Image source={source} resizeMode="contain" style={[
+    styles.hat,
+    grown && styles.grownHat,
+    attachment.align === 'right' ? (grown ? styles.grownHatRight : styles.hatRight) : (grown ? styles.grownHatCenter : styles.hatCenter),
+    { opacity, transform: [{ rotate: `${attachment.rotation}deg` }] },
+  ]} />;
 }
 
 const styles = StyleSheet.create({
@@ -53,7 +58,8 @@ const styles = StyleSheet.create({
   hat: { position: 'absolute', width: 90, height: 90 },
   grownHat: { width: 104, height: 104 },
   hatCenter: { top: -34, alignSelf: 'center' },
-  hatRight: { top: -20, right: 28 },
+  // Keep the brim centered on the head; the source PNGs already have a level brim.
+  hatRight: { top: -42, left: '50%', marginLeft: -45 },
   grownHatCenter: { top: -23, alignSelf: 'center' },
-  grownHatRight: { top: -9, right: 23 },
+  grownHatRight: { top: -58, left: '50%', marginLeft: -52 },
 });

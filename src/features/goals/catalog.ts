@@ -27,12 +27,4 @@ export const GOAL_TEMPLATES: GoalTemplate[] = [
 
 export const GOAL_TEMPLATE_BY_ID = Object.fromEntries(GOAL_TEMPLATES.map((item) => [item.id, item])) as Record<GoalTemplateId, GoalTemplate>;
 
-export function isGoalTemplateAvailable(
-  templateId: GoalTemplateId,
-  goals: readonly { templateId: GoalTemplateId }[],
-  ownedHats: readonly string[],
-) {
-  if (goals.some((goal) => goal.templateId === templateId)) return false;
-  if (templateId === 'party-hat' && ownedHats.includes('dotted')) return false;
-  return true;
-}
+export { isGoalTemplateAvailable } from '@/game/purchaseRules';

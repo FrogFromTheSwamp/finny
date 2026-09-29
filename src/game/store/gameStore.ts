@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import { isGoalTemplateAvailable, type GoalTemplateId } from "@/features/goals/catalog";
+import type { GoalTemplateId } from "@/features/goals/catalog";
+import { canClaimReward, canPurchaseGoal, hatPurchaseAction, isGoalTemplateAvailable } from "@/game/purchaseRules";
 import { FOOD_BY_ID, type FoodId } from "@/game/catalog";
 import {
   makeTestGameData,
@@ -326,10 +327,7 @@ export const useGameStore = create<GameState>()(
           },
         })),
       claimLessonReward: (lessonId) => {
-        if (
-          !get().completedLessons.includes(lessonId) ||
-          get().claimedLessonRewards.includes(lessonId)
-        )
+        if (!canClaimReward(lessonId, get().completedLessons, get().claimedLessonRewards))
           return { ok: false, coins: 0, xp: 0 };
         const coins = 30,
           xp = 25;
@@ -355,10 +353,7 @@ export const useGameStore = create<GameState>()(
             : [...state.completedChapters, chapterId],
         })),
       claimChapterReward: (chapterId) => {
-        if (
-          !get().completedChapters.includes(chapterId) ||
-          get().claimedChapterRewards.includes(chapterId)
-        )
+        if (!canClaimReward(chapterId, get().completedChapters, get().claimedChapterRewards))
           return { ok: false, coins: 0, xp: 0 };
         const coins = 30,
           xp = 25;
@@ -427,7 +422,7 @@ export const useGameStore = create<GameState>()(
       },
       purchaseGoal: (goalId) => {
         const goal = get().goals.find((g) => g.id === goalId);
-        if (!goal || goal.purchasedAt || get().piggy < goal.target || get().goals.some((g) => g.templateId === goal.templateId && !!g.purchasedAt) || (goal.templateId === 'party-hat' && get().ownedHats.includes('dotted'))) return false;
+        if (!canPurchaseGoal(goal, get().goals, get().piggy, get().ownedHats) || !goal) return false;
         set((state) => ({
           piggy: state.piggy - goal.target,
           goals: state.goals.map((g) =>
@@ -449,7 +444,7 @@ export const useGameStore = create<GameState>()(
       },
       removeGoal: (goalId) =>
         set((state) => ({
-          goals: state.goals.filter((g) => g.id !== goalId),
+          goals: state.goals.filter((g) => g.id !== goalId || !!g.purchasedAt),
         })),
       markMilestoneSeen: (id) =>
         set((state) => ({
@@ -462,12 +457,14 @@ export const useGameStore = create<GameState>()(
           state.ownedHats.includes(hatId) ? { equippedHat: hatId } : state,
         ),
       purchaseHat: (hatId) => {
-        if (get().ownedHats.includes(hatId)) {
+        const hat = HAT_BY_ID[hatId];
+        if (!hat) return false;
+        const action = hatPurchaseAction(hatId, hat.price, get().coins, get().ownedHats);
+        if (action === 'equip') {
           set({ equippedHat: hatId });
           return true;
         }
-        const hat = HAT_BY_ID[hatId];
-        if (!hat || get().coins < hat.price) return false;
+        if (action === 'insufficient') return false;
         set((state) => ({
           coins: state.coins - hat.price,
           equippedHat: hatId,

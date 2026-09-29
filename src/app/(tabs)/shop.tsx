@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { Animated, Image, ImageBackground, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function HatPreview({ source }: { source: ImageSourcePropType }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -29,6 +30,7 @@ function HatPreview({ source }: { source: ImageSourcePropType }) {
 
 export default function WardrobeShopScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
   const coins = useGameStore((s) => s.coins);
   const equippedHat = useGameStore((s) => s.equippedHat);
@@ -118,8 +120,8 @@ export default function WardrobeShopScreen() {
     <View style={styles.root}>
       <ImageBackground source={wardrobeRoom} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <GameHud showHunger={false} />
-      <View style={[styles.petArea, grown && styles.grownPetArea]}><PetWithHat color={color} hatId={hat.id} /></View>
-      <View style={styles.categoryBox}>
+      <View style={[styles.petArea, grown && styles.grownPetArea, { bottom: '30%' }]}><PetWithHat color={color} hatId={hat.id} /></View>
+      <View style={[styles.categoryBox, { bottom: 90 + insets.bottom }]}>
         <Pressable onPress={() => move(-1)} style={styles.arrow} accessibilityLabel="Предыдущая вещь">
           <Image source={leftArrow} style={styles.arrowImage} resizeMode="contain" />
         </Pressable>

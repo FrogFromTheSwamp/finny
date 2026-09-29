@@ -26,7 +26,7 @@ export function PetSpeechBubble({ lines, onFinish }: Props) {
         resizeMode="stretch"
         style={styles.bubble}
       >
-        <AppText variant="body" style={styles.text}>
+        <AppText variant="label" style={styles.text}>
           {lines[index]}
         </AppText>
       </ImageBackground>
@@ -40,24 +40,24 @@ const styles = StyleSheet.create({
     top: "35%",
     left: 0,
     right: 10,
-    alignItems: "center",
+    alignItems: "flex-start",
+    justifyContent: 'center',
     paddingHorizontal: 16,
   },
 
   bubble: {
-    width: "95%",
+    width: "90%",
     maxWidth: 368,
     aspectRatio: 1232 / 717,
-    justifyContent: "center",
+    justifyContent: "flex-start",
   },
 
   text: {
     color: "#2A1105",
     width: "100%",
     flexShrink: 1,
-    textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 30,
-    paddingVertical: 10,
+    textAlign: "left",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
 });

@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     height: 68,
     backgroundColor: "transparent",
   },
-  plusWrap: { position: "relative", width: 60, top:45, alignItems: "center", justifyContent: "center" },
+  plusWrap: { position: "relative", width: 60, top:5, alignItems: "center", justifyContent: "center" },
   plusIcon: { width: 50, },
   plusHand: { top: -45, right: 25 },
   plateHand: { top: -20, right: "50%" },

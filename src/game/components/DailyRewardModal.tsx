@@ -5,7 +5,17 @@ import fire from "@/assets/library/ui/effects/streak-fire.png";
 import closeIcon from "@/assets/library/ui/icons/close.png";
 import { useGameStore } from "@/game/store/gameStore";
 import { fontFamily } from "@/ui/theme";
-import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
@@ -52,6 +62,8 @@ export function DailyRewardModal({
   mandatory = false,
 }: Props) {
   const streak = useGameStore((s) => s.streakDays);
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const lastRewardDate = useGameStore((s) => s.lastRewardDate);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
   const claim = useGameStore((s) => s.claimDailyReward);
@@ -82,7 +94,14 @@ export function DailyRewardModal({
       }}
     >
       <View style={styles.backdrop}>
-        <ScrollView style={[styles.sheet, { maxHeight: height * 0.86 }]} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 18 }} bounces={false} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          style={[styles.sheet, { maxHeight: height * 0.86 }]}
+          contentContainerStyle={{
+            paddingBottom: Math.max(insets.bottom, 16) + 18,
+          }}
+          bounces={false}
+          showsVerticalScrollIndicator={false}
+        >
           {!mandatory ? (
             <Pressable
               style={styles.close}

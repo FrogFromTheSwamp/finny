@@ -11,6 +11,12 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
 import meadowBg from "@/assets/library/scenes/field.png";
 import { HATCH_CAPTIONS } from "@/content/hatchStages";
@@ -23,8 +29,8 @@ const TITLE_LEFT = 16;
 const TITLE_TOP = 50;
 const TITLE_WIDTH = 380;
 const EGG_TOP = 345;
-const EGG_WIDTH = 213;
-const EGG_HEIGHT = 275;
+const EGG_WIDTH = 250;
+const EGG_HEIGHT = 250;
 const PET_LEFT = 106;
 const PET_TOP = 412;
 const PET_WIDTH = 200;
@@ -38,6 +44,8 @@ const TEXT_COLOR = "#1E0C00";
 const INPUT_BORDER = "#5B4134";
 const BURST_DURATION_MS = 900;
 const PET_ONLY_DURATION_MS = 700;
+const SHAKE_ANGLE = 9;
+const SHAKE_STEP_MS = 55;
 
 type Phase = "cracking" | "bursting" | "pet-only" | "naming";
 
@@ -57,6 +65,11 @@ export default function PetHatchScreen() {
   const [petName, setPetName] = useState("");
   const [keyboardTop, setKeyboardTop] = useState<number | null>(null);
   const [screenTop, setScreenTop] = useState(0);
+  const eggShake = useSharedValue(0);
+
+  const eggShakeStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${eggShake.value}deg` }],
+  }));
 
   const updateScreenTop = () => {
     screenRef.current?.measureInWindow((_x, y) => setScreenTop(y));
@@ -101,8 +114,19 @@ export default function PetHatchScreen() {
     );
   }, [keyboardTop, scale, screenTop]);
 
+  const triggerEggShake = () => {
+    eggShake.value = withSequence(
+      withTiming(-SHAKE_ANGLE, { duration: SHAKE_STEP_MS }),
+      withTiming(SHAKE_ANGLE, { duration: SHAKE_STEP_MS }),
+      withTiming(-SHAKE_ANGLE * 0.7, { duration: SHAKE_STEP_MS }),
+      withTiming(SHAKE_ANGLE * 0.7, { duration: SHAKE_STEP_MS }),
+      withTiming(0, { duration: SHAKE_STEP_MS }),
+    );
+  };
+
   const handleEggPress = () => {
     if (phase !== "cracking") return;
+    triggerEggShake();
     if (stageIndex >= assets.eggStages.length - 1) {
       setPhase("bursting");
       return;
@@ -141,25 +165,30 @@ export default function PetHatchScreen() {
           >
             {HATCH_CAPTIONS[stageIndex]}
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Постучать по яйцу"
-            onPress={handleEggPress}
-            style={{
-              position: "absolute",
-              left: "50%",
-              top: scaleValue(EGG_TOP),
-              width: scaleValue(EGG_WIDTH),
-              height: scaleValue(EGG_HEIGHT),
-              transform: [{ translateX: -scaleValue(EGG_WIDTH / 2) }],
-            }}
+          <View
+            pointerEvents="box-none"
+            style={[styles.eggArea, { top: scaleValue(EGG_TOP) }]}
           >
-            <Image
-              source={assets.eggStages[stageIndex]}
-              resizeMode="contain"
-              style={StyleSheet.absoluteFill}
-            />
-          </Pressable>
+            <Animated.View
+              style={[
+                { width: scaleValue(EGG_WIDTH), height: scaleValue(EGG_HEIGHT) },
+                eggShakeStyle,
+              ]}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Постучать по яйцу"
+                onPress={handleEggPress}
+                style={StyleSheet.absoluteFill}
+              >
+                <Image
+                  source={assets.eggStages[stageIndex]}
+                  resizeMode="contain"
+                  style={styles.eggImage}
+                />
+              </Pressable>
+            </Animated.View>
+          </View>
         </>
       )}
       {phase === "bursting" && (
@@ -238,6 +267,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "left",
   },
+  eggArea: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
   nameInput: {
     position: "absolute",
     backgroundColor: "#FFFFFF",
@@ -246,4 +281,12 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     textAlignVertical: "center",
   },
+  eggImage: {
+    position: 'absolute',
+    left: 20,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: '80%'
+  }
 });

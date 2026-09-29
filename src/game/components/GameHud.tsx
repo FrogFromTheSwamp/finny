@@ -40,9 +40,7 @@ function LevelBadge({ value }: { value: number }) {
           fill="none"
           strokeDasharray={`${circumference * progress} ${circumference}`}
           strokeLinecap="butt"
-          rotation={-92}
-          originX={29}
-          originY={29}
+          transform="rotate(-92 29 29)"
         />
       </Svg>
       <Text style={styles.levelText}>{value}</Text>

@@ -12,7 +12,7 @@ import piggy5 from '@/assets/library/learning/lesson/piggy-5.png';
 import trayArt from '@/assets/library/learning/lesson/tray.png';
 import { FinnyButton } from '@/components/FinnyButton';
 import type { PetColorId } from '@/content/petColors';
-import { CHAPTER_BY_ID, LESSON_BY_ID } from '@/features/learning/content';
+import { LESSON_BY_ID } from '@/features/learning/content';
 import {
   LESSON_FLOWS,
   PRIORITY_NOW,
@@ -98,12 +98,6 @@ export default function LessonScreen() {
     finished.current = true;
     const accuracy = Math.max(60, 100 - mistakesRef.current * 20);
     completeLesson(lesson.id, accuracy);
-    const chapter = CHAPTER_BY_ID[lesson.chapter];
-    const isLast = chapter.lessons[chapter.lessons.length - 1] === lesson.id;
-    if (isLast) {
-      router.replace({ pathname: '/chapter-complete', params: { chapter: lesson.chapter } });
-      return;
-    }
     router.replace({ pathname: '/lesson-complete', params: { lesson: lesson.id } });
   }, [completeLesson, lesson, router]);
 
@@ -559,10 +553,9 @@ function StepBody({
         {savingsChoices.map((item) => {
           const on = pick === item.id;
           return (
-            <Pressable key={item.id} onPress={() => onPick(item.id)} style={[styles.radio, on && styles.radioOn]}>
-              <Image source={item.image} style={styles.radioImage} resizeMode="contain" />
+            <Pressable key={item.id} onPress={() => onPick(item.id)} style={styles.radio} accessibilityRole="radio" accessibilityState={{ checked: on }}>
+              <View style={[styles.dot, on && styles.dotOn]}>{on ? <Text style={styles.radioCheck}>✓</Text> : null}</View>
               <Text style={styles.radioLabel}>{item.name}</Text>
-              <View style={[styles.dot, on && styles.dotOn]} />
             </Pressable>
           );
         })}
@@ -1146,12 +1139,11 @@ const styles = StyleSheet.create({
   keys: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   key: { width: '31%', height: 52, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   keyText: { fontFamily: fontFamily.bold, fontSize: 20, color: '#24160F' },
-  radio: { marginTop: 12, minHeight: 72, borderRadius: 16, backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, gap: 12, borderWidth: 2, borderColor: '#fff' },
-  radioOn: { borderColor: '#3A2418' },
-  radioImage: { width: 52, height: 52 },
-  radioLabel: { flex: 1, fontFamily: fontFamily.bold, fontSize: 16, color: '#24160F' },
-  dot: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: '#C8C0BA' },
-  dotOn: { borderColor: '#3A2418', backgroundColor: '#3A2418' },
+  radio: { minHeight: 42, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  radioLabel: { flex: 1, fontFamily: fontFamily.medium, fontSize: 16, color: '#24160F' },
+  dot: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#7C7069', alignItems: 'center', justifyContent: 'center' },
+  dotOn: { borderColor: '#3A2418' },
+  radioCheck: { color: '#3A2418', fontFamily: fontFamily.bold, fontSize: 16, lineHeight: 20 },
   swipeCard: { marginTop: 28, minHeight: 160, borderRadius: 16, backgroundColor: '#fff', padding: 20, justifyContent: 'center' },
   swipeText: { fontFamily: fontFamily.semiBold, fontSize: 18, lineHeight: 26, color: '#24160F', textAlign: 'center' },
   lane: { marginTop: 14, borderRadius: 16, padding: 10, backgroundColor: '#EFECEA', minHeight: 92 },

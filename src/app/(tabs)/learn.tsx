@@ -11,8 +11,8 @@ import { CHAPTERS, LESSON_BY_ID, type LessonType } from '@/features/learning/con
 import { GameHud } from '@/game/components/GameHud';
 import { useGameStore } from '@/game/store/gameStore';
 import { fontFamily } from '@/ui/theme';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -34,10 +34,36 @@ export default function LearnScreen() {
   const lessonsOpen = tutorialStage >= 8 || hasGoal;
   const firstUnfinishedIndex = CHAPTERS.findIndex((c) => !completedChapters.includes(c.id));
   const currentChapterIndex = firstUnfinishedIndex === -1 ? CHAPTERS.length - 1 : firstUnfinishedIndex;
+  const openingRef = useRef(false);
+  const [openingLessonId, setOpeningLessonId] = useState<string | null>(null);
+
+  useFocusEffect(useCallback(() => {
+    openingRef.current = false;
+    setOpeningLessonId(null);
+  }, []));
 
   useEffect(() => {
     if (hasGoal && tutorialStage < 8) setTutorialStage(8);
   }, [hasGoal, tutorialStage, setTutorialStage]);
+
+  useEffect(() => {
+    if (!lessonsOpen) return;
+    const nextChapter = CHAPTERS.find((chapter, index) =>
+      (index === 0 || completedChapters.includes(CHAPTERS[index - 1]!.id)) &&
+      chapter.lessons.some((id) => !completedLessons.includes(id)),
+    );
+    const nextLessonId = nextChapter?.lessons.find((id) => !completedLessons.includes(id));
+    if (nextLessonId) {
+      router.prefetch({ pathname: '/lesson/[id]', params: { id: nextLessonId } });
+    }
+  }, [completedChapters, completedLessons, lessonsOpen, router]);
+
+  const openLesson = (lessonId: string) => {
+    if (openingRef.current) return;
+    openingRef.current = true;
+    setOpeningLessonId(lessonId);
+    router.push({ pathname: '/lesson/[id]', params: { id: lessonId } });
+  };
 
   return (
     <View style={styles.root}>
@@ -74,15 +100,16 @@ export default function LearnScreen() {
                   return (
                     <View key={lessonId} style={[styles.lessonLine, { transform: [{ translateX: offsetX }] }]}>
                       <Pressable
-                        disabled={!unlocked}
-                        onPress={() => router.push({ pathname: '/lesson/[id]', params: { id: lessonId } })}
-                        style={[styles.nodeWrap, done && styles.nodeDone]}
+                        disabled={!unlocked || openingLessonId !== null}
+                        onPress={() => openLesson(lessonId)}
+                        style={({ pressed }) => [styles.nodeWrap, done && styles.nodeDone, (pressed || openingLessonId === lessonId) && styles.nodePressed]}
                         accessibilityRole="button"
+                        accessibilityState={{ disabled: !unlocked || openingLessonId !== null, busy: openingLessonId === lessonId }}
                         accessibilityLabel={`${LESSON_TYPE_LABEL[type]}${unlocked ? '' : ' (заблокировано)'}`}
                       >
                         <Image source={unlocked ? icons.on : icons.off} style={styles.nodeIcon} resizeMode="contain" />
                       </Pressable>
-                      <View style={styles.lessonLabel}><Text style={styles.lessonLabelTop}>Урок {li + 1}</Text><Text style={styles.lessonLabelText}>{lesson?.title}</Text></View>
+                      <View style={styles.lessonLabel}><Text style={styles.lessonLabelTop}>Урок {li + 1}</Text><Text style={styles.lessonLabelText}>{openingLessonId === lessonId ? 'Открываем урок…' : lesson?.title}</Text></View>
                     </View>
                   );
                 })}
@@ -114,6 +141,7 @@ const styles = StyleSheet.create({
   lessonLine: { width: 250, minHeight: 96, flexDirection: 'row', alignItems: 'center' },
   nodeWrap: { width: 100, height: 100, alignItems: 'center', justifyContent: 'center' },
   nodeDone: { opacity: 0.88 },
+  nodePressed: { opacity: 0.65, transform: [{ scale: 0.96 }] },
   nodeIcon: { width: 96, height: 96 },
   lessonLabel: { flex: 1, marginLeft: 4 },
   lessonLabelTop: { fontFamily: fontFamily.semiBold, fontSize: 10, color: '#9A8D84' },

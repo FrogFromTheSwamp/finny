@@ -34,7 +34,7 @@ export function BudgetDonut({ plan, size = 190, centerMain = '100%', centerSub =
         const length = c * v / 100;
         const dashOffset = -c * offset / 100;
         offset += v;
-        return <Circle key={i} cx={size/2} cy={size/2} r={r} stroke={colors[i]} strokeWidth={stroke} fill="none" strokeDasharray={`${length} ${c-length}`} strokeDashoffset={dashOffset} rotation={-90} origin={`${size/2}, ${size/2}`} strokeLinecap="butt" />;
+        return <Circle key={i} cx={size/2} cy={size/2} r={r} stroke={colors[i]} strokeWidth={stroke} fill="none" strokeDasharray={`${length} ${c-length}`} strokeDashoffset={dashOffset} transform={`rotate(-90 ${size/2} ${size/2})`} strokeLinecap="butt" />;
       })}
     </Svg>
     <Text style={styles.donutMain}>{centerMain}</Text><Text style={styles.donutSub}>{centerSub}</Text>

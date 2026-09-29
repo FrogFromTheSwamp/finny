@@ -4,8 +4,8 @@ import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
 import { GameHud } from '@/game/components/GameHud';
 import { useGameStore } from '@/game/store/gameStore';
 import { fontFamily } from '@/ui/theme';
-import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function GoalsScreen() {
@@ -27,9 +27,16 @@ export default function GoalsScreen() {
   const [transfer, setTransfer] = useState<'in' | 'out' | null>(null);
   const [amountText, setAmountText] = useState('');
   const [transferError, setTransferError] = useState('');
+  const openingFirstLessonRef = useRef(false);
+  const [openingFirstLesson, setOpeningFirstLesson] = useState(false);
   const activeGoals = goals.filter((g) => !g.purchasedAt);
   const planUnlocked = completedChapters.includes('budget');
   const readyHatGoal = useMemo(() => activeGoals.find((g) => g.templateId === 'party-hat' && piggyBalance >= g.target), [activeGoals, piggyBalance]);
+
+  useFocusEffect(useCallback(() => {
+    openingFirstLessonRef.current = false;
+    setOpeningFirstLesson(false);
+  }, []));
 
   useEffect(() => {
     if (tutorialStage === 7 && goals.some((g) => g.templateId === 'party-hat')) setFirstGoalOpen(true);
@@ -40,6 +47,9 @@ export default function GoalsScreen() {
   }, [readyHatGoal, milestonesSeen, tutorialStage]);
 
   const goToFirstLesson = () => {
+    if (openingFirstLessonRef.current) return;
+    openingFirstLessonRef.current = true;
+    setOpeningFirstLesson(true);
     setFirstGoalOpen(false);
     setTutorialStage(8);
     router.push({ pathname: '/lesson/[id]', params: { id: 'budget-1' } });
@@ -119,7 +129,7 @@ export default function GoalsScreen() {
           <Image source={partyHat} style={styles.modalAsset} resizeMode="contain" />
           <Text style={styles.modalTitle}>Поздравляем, ты добавил свою первую цель!</Text>
           <Text style={styles.modalText}>Заработай монеты и переведи их со счёта в копилку. Когда суммы хватит, цель можно купить сразу оттуда.</Text>
-          <Pressable style={styles.modalButton} onPress={goToFirstLesson}><Text style={styles.modalButtonText}>Перейти к урокам</Text></Pressable>
+          <Pressable disabled={openingFirstLesson} style={[styles.modalButton, openingFirstLesson && { opacity: 0.65 }]} onPress={goToFirstLesson}><Text style={styles.modalButtonText}>Перейти к урокам</Text></Pressable>
         </View></View>
       </Modal>
 

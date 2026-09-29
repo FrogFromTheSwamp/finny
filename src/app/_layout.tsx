@@ -41,6 +41,8 @@ export default function RootLayout() {
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: "transparent" },
+        animation: "fade_from_bottom",
+        animationDuration: 220,
       }}
     >
       <Stack.Protected guard={!onboardingDone}>

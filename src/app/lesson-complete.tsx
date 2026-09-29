@@ -13,6 +13,7 @@ import { useGameStore } from '@/game/store/gameStore';
 import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRef } from 'react';
 import type { ImageSourcePropType, ImageStyle, StyleProp } from 'react-native';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -34,10 +35,13 @@ export default function LessonCompleteScreen() {
   const accuracy = useGameStore((s) => s.lessonAccuracy[String(lessonId)] ?? 100);
   const claimed = useGameStore((s) => s.claimedLessonRewards.includes(String(lessonId)));
   const claim = useGameStore((s) => s.claimLessonReward);
+  const leavingRef = useRef(false);
   if (!lesson) return null;
   const chapter = CHAPTER_BY_ID[lesson.chapter];
   const isLast = chapter.lessons[chapter.lessons.length - 1] === lesson.id;
   const go = () => {
+    if (leavingRef.current) return;
+    leavingRef.current = true;
     if (!claimed) claim(lesson.id);
     if (isLast) router.replace({ pathname: '/chapter-complete', params: { chapter: lesson.chapter } });
     else router.replace('/(tabs)/learn');

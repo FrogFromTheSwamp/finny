@@ -8,7 +8,12 @@ export default function TabsLayout() {
       <Tabs
         initialRouteName="home"
         tabBar={(props) => <CustomTabBar {...props} />}
-        screenOptions={{ headerShown: false, tabBarStyle: { position: 'absolute', backgroundColor: 'transparent', borderTopWidth: 0, elevation: 0 } }}
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade',
+          transitionSpec: { animation: 'timing', config: { duration: 180 } },
+          tabBarStyle: { position: 'absolute', backgroundColor: 'transparent', borderTopWidth: 0, elevation: 0 },
+        }}
       >
         <Tabs.Screen name="learn" options={{ title: 'Учёба' }} />
         <Tabs.Screen name="goals" options={{ title: 'Копилка' }} />

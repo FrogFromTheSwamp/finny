@@ -8,7 +8,7 @@ import { useGameStore, type BudgetPlan } from '@/game/store/gameStore';
 import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -37,6 +37,11 @@ export default function ChapterCompleteScreen() {
   const [stage, setStage] = useState(0);
   const [plan, setPlan] = useState<BudgetPlan>(storedPlan);
   const [distributionBalance, setDistributionBalance] = useState(coins);
+  const stageActionRef = useRef(false);
+
+  useEffect(() => {
+    stageActionRef.current = false;
+  }, [stage]);
 
   if (!chapter) return null;
 
@@ -78,6 +83,14 @@ export default function ChapterCompleteScreen() {
   const finishGrowth = () => {
     markSeen(growthKey);
     finish();
+  };
+
+  const advance = () => {
+    if (stageActionRef.current) return;
+    stageActionRef.current = true;
+    if (stage === 0) claimAndOpenDistribution();
+    else if (stage === 1) saveDistribution();
+    else finishGrowth();
   };
 
   const distributionView = () => (
@@ -129,7 +142,7 @@ export default function ChapterCompleteScreen() {
       <View style={styles.bottom}>
         <FinnyButton
           label={stage === 0 ? (rewardClaimed ? 'Распределить бюджет' : 'Забрать финники') : stage === 1 ? 'Готово!' : 'Продолжить'}
-          onPress={stage === 0 ? claimAndOpenDistribution : stage === 1 ? saveDistribution : finishGrowth}
+          onPress={advance}
         />
       </View>
     </SafeAreaView>

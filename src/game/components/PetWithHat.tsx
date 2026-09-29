@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react';
-import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native';
-import { Animated, StyleSheet, View } from 'react-native';
 import type { PetColorId } from '@/content/petColors';
 import { PetSprite, type PetEmotion } from '@/game/components/PetSprite';
 import { useGameStore } from '@/game/store/gameStore';
 import { HAT_BY_ID, type HatAttachment, type HatId } from '@/game/wardrobe';
+import { useEffect, useRef } from 'react';
+import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 
 type Props = {
   color: PetColorId;

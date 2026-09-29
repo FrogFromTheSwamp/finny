@@ -47,7 +47,7 @@ export const LESSONS: LessonDefinition[] = [
     kind: 'budget-select',
   },
   {
-    id: 'budget-2', type: 'test', chapter: 'budget', number: 2, kicker: 'Глава 1, Урок 2', title: 'Что купить сейчас?',
+    id: 'budget-2', type: 'test', chapter: 'budget', number: 2, kicker: 'Глава 1, Урок 2', title: 'Распредели бюджет на неделю',
     introTitle: 'До учёбы — 2 дня',
     introText: 'У Финни 75 монет. Разложи покупки на «Сейчас» и «Позже». К учёбе обязательно должны быть готовы ручка и тетрадь.',
     image: thingsPile,
@@ -63,7 +63,7 @@ export const LESSONS: LessonDefinition[] = [
     kind: 'trip',
   },
   {
-    id: 'budget-4', type: 'repetition', chapter: 'budget', number: 4, kicker: 'Глава 1, Урок 4', title: 'Проверим бюджет',
+    id: 'budget-4', type: 'repetition', chapter: 'budget', number: 4, kicker: 'Глава 1, Урок 4', title: 'Карточки про бюджет',
     introTitle: 'Финни приготовил карточки',
     introText: 'Определи, верное утверждение или нет. Так мы проверим главные правила бюджета.',
     image: thingsPile,
@@ -98,7 +98,7 @@ export const LESSONS: LessonDefinition[] = [
     kind: 'sort-coins',
   },
   {
-    id: 'savings-4', type: 'repetition', chapter: 'savings', number: 4, kicker: 'Глава 2, Урок 4', title: 'Проверим сбережения',
+    id: 'savings-4', type: 'repetition', chapter: 'savings', number: 4, kicker: 'Глава 2, Урок 4', title: 'Карточки про сбережения',
     introTitle: 'Верно или неверно?',
     introText: 'Определи, какие привычки действительно помогают накопить на цель.',
     image: piggyBank,
@@ -106,7 +106,7 @@ export const LESSONS: LessonDefinition[] = [
     kind: 'truth',
   },
   {
-    id: 'payments-1', type: 'theory', chapter: 'payments', number: 1, kicker: 'Глава 3, Урок 1', title: 'Платежи и покупки',
+    id: 'payments-1', type: 'theory', chapter: 'payments', number: 1, kicker: 'Глава 3, Урок 1', title: 'Как не потратить лишнее',
     introTitle: 'Что происходит при покупке?',
     introText: 'Покупка — это обмен денег на то, что тебе нужно. Перед оплатой проверь цену и свой баланс.',
     image: bankCard,
@@ -117,7 +117,7 @@ export const LESSONS: LessonDefinition[] = [
     kind: 'purchase-balance',
   },
   {
-    id: 'payments-2', type: 'test', chapter: 'payments', number: 2, kicker: 'Глава 3, Урок 2', title: 'Заплати за покупку',
+    id: 'payments-2', type: 'test', chapter: 'payments', number: 2, kicker: 'Глава 3, Урок 2', title: 'Заплати за ролики',
     introTitle: 'Ролики стоят 75 монет',
     introText: 'Собери сумму монетами 1, 3, 5, 10 и 50. Если заплатишь больше, рассчитай сдачу.',
     image: handCoins,
@@ -125,7 +125,7 @@ export const LESSONS: LessonDefinition[] = [
     kind: 'coinpay-change',
   },
   {
-    id: 'payments-3', type: 'repetition', chapter: 'payments', number: 3, kicker: 'Глава 3, Урок 3', title: 'Проверим покупки',
+    id: 'payments-3', type: 'repetition', chapter: 'payments', number: 3, kicker: 'Глава 3, Урок 3', title: 'Карточки про покупки',
     introTitle: 'Финни приготовил карточки',
     introText: 'Проверим цену, сдачу и безопасность банковской карты.',
     image: bankCard,

@@ -12,6 +12,7 @@ import { GameHud } from '@/game/components/GameHud';
 import { useGameStore } from '@/game/store/gameStore';
 import { fontFamily } from '@/ui/theme';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import type { ImageSourcePropType } from 'react-native';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -27,19 +28,26 @@ export default function LearnScreen() {
   const router = useRouter();
   const completedLessons = useGameStore((s) => s.completedLessons);
   const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const setTutorialStage = useGameStore((s) => s.setTutorialStage);
+  const hasGoal = useGameStore((s) => s.goals.length > 0);
   const completedChapters = useGameStore((s) => s.completedChapters);
+  const lessonsOpen = tutorialStage >= 8 || hasGoal;
   const firstUnfinishedIndex = CHAPTERS.findIndex((c) => !completedChapters.includes(c.id));
   const currentChapterIndex = firstUnfinishedIndex === -1 ? CHAPTERS.length - 1 : firstUnfinishedIndex;
+
+  useEffect(() => {
+    if (hasGoal && tutorialStage < 8) setTutorialStage(8);
+  }, [hasGoal, tutorialStage, setTutorialStage]);
 
   return (
     <View style={styles.root}>
       <GameHud showHunger={false} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.screenTitle}>Учёба</Text>
-        <Text style={styles.lead}>{tutorialStage < 8 ? 'Сначала помоги Финни с едой и создай первую цель — после этого откроется первый урок.' : completedChapters.includes('budget') ? 'Проходи уроки по порядку.' : 'Проходи уроки по порядку. После первой главы Финни повзрослеет.'}</Text>
+        <Text style={styles.lead}>{lessonsOpen ? (completedChapters.includes('budget') ? 'Проходи уроки по порядку.' : 'Проходи уроки по порядку. После первой главы Финни повзрослеет.') : 'Сначала помоги Финни с едой и создай первую цель — после этого откроется первый урок.'}</Text>
 
         {CHAPTERS.map((chapter, ci) => {
-          const chapterUnlocked = tutorialStage >= 8 && (ci === 0 || completedChapters.includes(CHAPTERS[ci - 1]!.id));
+          const chapterUnlocked = lessonsOpen && (ci === 0 || completedChapters.includes(CHAPTERS[ci - 1]!.id));
           const isActiveHeader = ci === currentChapterIndex;
           const marker = CHAPTER_MARKERS[ci] ?? marker1;
 

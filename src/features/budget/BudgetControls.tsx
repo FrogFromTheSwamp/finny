@@ -12,7 +12,7 @@ export function normalizePlan(plan: BudgetPlan): BudgetPlan {
 
 export function rebalancePlan(plan: BudgetPlan, key: keyof BudgetPlan, nextValue: number): BudgetPlan {
   const value = Math.max(0, Math.min(100, Math.round(nextValue)));
-  const others = (['need','want','save'] as (keyof BudgetPlan)[]).filter((k) => k !== key);
+  const others = (['need', 'want', 'save'] as (keyof BudgetPlan)[]).filter((k) => k !== key);
   const otherTotal = plan[others[0]!] + plan[others[1]!];
   const remaining = 100 - value;
   const first = otherTotal > 0 ? Math.round(remaining * (plan[others[0]!] / otherTotal)) : Math.round(remaining / 2);
@@ -25,16 +25,16 @@ export function BudgetDonut({ plan, size = 190, centerMain = '100%', centerSub =
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const values = [plan.need, plan.want, plan.save];
-  const colors = ['#F8AE28','#D52C7D','#4E82DB'];
+  const colors = ['#F8AE28', '#D52C7D', '#4E82DB'];
   let offset = 0;
   return <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={StyleSheet.absoluteFill}>
-      <Circle cx={size/2} cy={size/2} r={r} stroke="#E8E5E2" strokeWidth={stroke} fill="none" />
-      {values.map((v,i) => {
+      <Circle cx={size / 2} cy={size / 2} r={r} stroke="#E8E5E2" strokeWidth={stroke} fill="none" />
+      {values.map((v, i) => {
         const length = c * v / 100;
         const dashOffset = -c * offset / 100;
         offset += v;
-        return <Circle key={i} cx={size/2} cy={size/2} r={r} stroke={colors[i]} strokeWidth={stroke} fill="none" strokeDasharray={`${length} ${c-length}`} strokeDashoffset={dashOffset} transform={`rotate(-90 ${size/2} ${size/2})`} strokeLinecap="butt" />;
+        return <Circle key={i} cx={size / 2} cy={size / 2} r={r} stroke={colors[i]} strokeWidth={stroke} fill="none" strokeDasharray={`${length} ${c - length}`} strokeDashoffset={dashOffset} transform={`rotate(-90 ${size / 2} ${size / 2})`} strokeLinecap="butt" />;
       })}
     </Svg>
     <Text style={styles.donutMain}>{centerMain}</Text><Text style={styles.donutSub}>{centerSub}</Text>
@@ -43,9 +43,9 @@ export function BudgetDonut({ plan, size = 190, centerMain = '100%', centerSub =
 
 export function PlanSliders({ plan, onChange }: { plan: BudgetPlan; onChange: (plan: BudgetPlan) => void }) {
   return <View style={styles.sliders}>
-    <PercentSlider label="Нужно" color="#F8AE28" value={plan.need} recommended={50} onChange={(v) => onChange(rebalancePlan(plan,'need',v))}/>
-    <PercentSlider label="Хочу" color="#D52C7D" value={plan.want} recommended={30} onChange={(v) => onChange(rebalancePlan(plan,'want',v))}/>
-    <PercentSlider label="Отложу" color="#4E82DB" value={plan.save} recommended={20} onChange={(v) => onChange(rebalancePlan(plan,'save',v))}/>
+    <PercentSlider label="Нужно" color="#F8AE28" value={plan.need} recommended={50} onChange={(v) => onChange(rebalancePlan(plan, 'need', v))} />
+    <PercentSlider label="Хочу" color="#D52C7D" value={plan.want} recommended={30} onChange={(v) => onChange(rebalancePlan(plan, 'want', v))} />
+    <PercentSlider label="Отложу" color="#4E82DB" value={plan.save} recommended={20} onChange={(v) => onChange(rebalancePlan(plan, 'save', v))} />
   </View>;
 }
 
@@ -60,9 +60,9 @@ function PercentSlider({ label, color, value, recommended, onChange }: { label: 
   return <View style={styles.sliderBlock}>
     <View style={styles.sliderHeader}><Text style={styles.sliderLabel}>{label}</Text><Text style={styles.sliderValue}>{value}%</Text></View>
     <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} {...pan.panHandlers}>
-      <View style={[styles.fill,{ width: `${value}%`, backgroundColor: color }]} />
-      <View style={[styles.recommended,{ left: `${recommended}%` }]}><View style={styles.recLine}/><Text style={styles.recText}>{recommended}%</Text></View>
-      <View style={[styles.knob,{ left: `${value}%`, borderColor: color }]} />
+      <View style={[styles.fill, { width: `${value}%`, backgroundColor: color }]} />
+      <View style={[styles.recommended, { left: `${recommended}%` }]}><View style={styles.recLine} /><Text style={styles.recText}>{recommended}%</Text></View>
+      <View style={[styles.knob, { left: `${value}%`, borderColor: color }]} />
     </View>
   </View>;
 }

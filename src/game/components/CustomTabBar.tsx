@@ -1,45 +1,55 @@
-import tabFood from '@/assets/library/ui/navigation/tabbar-food.png';
-import tabGoals from '@/assets/library/ui/navigation/tabbar-goals.png';
-import tabHome from '@/assets/library/ui/navigation/tabbar-home.png';
-import tabLearn from '@/assets/library/ui/navigation/tabbar-learn.png';
-import tabShop from '@/assets/library/ui/navigation/tabbar-shop.png';
-import { TutorialHand } from '@/game/components/TutorialHand';
-import { useGameStore } from '@/game/store/gameStore';
-import { Image, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TabIcon } from "@/game/components/TabIcon";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const routeOrder = ['learn', 'goals', 'home', 'food', 'shop'] as const;
-const stateImages = { learn: tabLearn, goals: tabGoals, home: tabHome, food: tabFood, shop: tabShop } as const;
+const iconNames = ["learn", "goals", "home", "food", "shop"] as const;
 
 export function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const barWidth = Math.min(width * 0.94, 368);
-  const activeName = (state.routes[state.index]?.name ?? 'home') as keyof typeof stateImages;
-  const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const itemWidth = barWidth / state.routes.length;
+  const itemMargin = Math.min(4, itemWidth * 0.04);
 
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { height: 79 + insets.bottom, paddingBottom: insets.bottom }]}> 
-      <View style={[styles.bar, { width: barWidth }]}> 
-        <Image source={stateImages[activeName] ?? tabHome} resizeMode="stretch" style={StyleSheet.absoluteFill} />
+    <View
+      pointerEvents="box-none"
+      style={[
+        styles.wrap,
+        { height: 87 + insets.bottom, paddingBottom: insets.bottom },
+      ]}
+    >
+      <View style={[styles.bar, { width: barWidth }]}>
         {state.routes.map((route: any, index: number) => {
           const focused = state.index === index;
-          const routeName = (routeOrder[index] ?? route.name) as (typeof routeOrder)[number];
+          const iconName = iconNames[index] ?? "home";
+          const itemHeight = Math.min(focused ? 76 : 68, itemWidth * 0.94);
+          const iconSize = Math.min(focused ? 44 : 40, itemWidth * 0.58);
           return (
             <Pressable
               key={route.key}
               accessibilityRole="button"
               accessibilityState={focused ? { selected: true } : {}}
-              accessibilityLabel={descriptors[route.key]?.options.tabBarAccessibilityLabel ?? descriptors[route.key]?.options.title}
+              accessibilityLabel={
+                descriptors[route.key]?.options.tabBarAccessibilityLabel
+              }
               onPress={() => {
-                const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+                const event = navigation.emit({
+                  type: "tabPress",
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!focused && !event.defaultPrevented)
+                  navigation.navigate(route.name, route.params);
               }}
-              style={styles.hitArea}
+              style={({ pressed }) => [
+                styles.item,
+                { height: itemHeight, marginHorizontal: itemMargin },
+                focused && styles.itemFocused,
+                pressed && styles.pressed,
+              ]}
             >
-              {(((tutorialStage === 2 && routeName === 'food') || (tutorialStage === 6 && routeName === 'shop')) && activeName !== routeName) ? (
-                <TutorialHand style={styles.tutorialHand} rotate="-18deg" />
-              ) : null}
+              <TabIcon name={iconName} size={iconSize} />
             </Pressable>
           );
         })}
@@ -49,8 +59,38 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', right: 0, bottom: 0, left: 0, width: '100%', zIndex: 10, alignItems: 'center', justifyContent: 'flex-end' },
-  bar: { height: 79, flexDirection: 'row' },
-  hitArea: { flex: 1, height: 79, position: 'relative' },
-  tutorialHand: { top: -54, right: 0 },
+  wrap: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    left: 0,
+    width: "100%",
+    zIndex: 10,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    backgroundColor: "transparent",
+  },
+  bar: {
+    height: 79,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  item: {
+    flex: 1,
+    marginTop: 4,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  itemFocused: {
+    marginTop: 0,
+    backgroundColor: "#E7DFD5",
+    borderWidth: 2,
+    borderColor: "#534122",
+  },
+  pressed: { transform: [{ scale: 0.96 }] },
 });

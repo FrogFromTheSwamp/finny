@@ -26,6 +26,7 @@ export default function FoodScreen() {
   const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const feed = useGameStore((s) => s.feed);
   const hunger = useGameStore((s) => s.hunger);
+  const grown = useGameStore((s) => s.completedChapters.includes("budget"));
   const color = (useProfileStore((s) => s.petColorId) || "brown") as PetColorId;
   const petName = useProfileStore((s) => s.petName || "Финни");
   const available = useMemo(
@@ -102,7 +103,7 @@ export default function FoodScreen() {
         resizeMode="cover"
       />
       <GameHud />
-      <View style={styles.petArea}>
+      <View style={[styles.petArea, grown && styles.grownPetArea]}>
         <PetWithHat color={color} isEating={mouthOpen} />
       </View>
       {selectedItem ? (
@@ -148,6 +149,7 @@ const styles = StyleSheet.create({
     top: "54%",
     alignItems: "center",
   },
+  grownPetArea: { top: "48%" },
   plateArea: {
     position: "absolute",
     left: 0,

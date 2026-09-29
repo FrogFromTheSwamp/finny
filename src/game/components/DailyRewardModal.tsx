@@ -94,14 +94,7 @@ export function DailyRewardModal({
       }}
     >
       <View style={styles.backdrop}>
-        <ScrollView
-          style={[styles.sheet, { maxHeight: height * 0.86 }]}
-          contentContainerStyle={{
-            paddingBottom: Math.max(insets.bottom, 16) + 18,
-          }}
-          bounces={false}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={[styles.sheet, { maxHeight: height * 0.86 }]}>
           {!mandatory ? (
             <Pressable
               style={styles.close}
@@ -115,61 +108,70 @@ export function DailyRewardModal({
               />
             </Pressable>
           ) : null}
-          <View style={styles.fireWrap}>
-            <Image source={fire} style={styles.fire} resizeMode="contain" />
-            <Text style={styles.streak}>{displayStreak}</Text>
-          </View>
-
-          <View style={styles.weekCard}>
-            <View style={styles.weekRow}>
-              {DAYS.map((day, index) => {
-                const date = new Date(today);
-                date.setDate(today.getDate() + index - todayIndex);
-                const isToday = index === todayIndex;
-                const isCompleted = rewardDates.has(localDateKey(date));
-                const source = isToday
-                  ? dayActive
-                  : isCompleted
-                    ? dayCompleted
-                    : dayDefault;
-                return (
-                  <View key={day} style={styles.dayCol}>
-                    <Text style={styles.dayLabel}>{day}</Text>
-                    <View style={styles.dayIconWrap}>
-                      <Image
-                        source={source}
-                        style={styles.dayState}
-                        resizeMode="contain"
-                      />
-                      {isToday ? (
-                        <View style={styles.checkBadge}>
-                          <Text style={styles.checkText}>✓</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-
-          <View style={styles.rewardRow}>
-            <Text style={styles.rewardTitle}>Ежедневная награда</Text>
-            <Text style={styles.rewardValue}>
-              +10 <Text style={styles.coin}>●</Text>
-            </Text>
-          </View>
-
-          <Pressable
-            disabled={!canClaim}
-            style={[styles.cta, !canClaim && styles.ctaDisabled]}
-            onPress={claimReward}
+          <ScrollView
+            style={styles.sheetScroll}
+            contentContainerStyle={{
+              paddingBottom: Math.max(insets.bottom, 16),
+            }}
+            bounces={false}
+            showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.ctaText}>
-              {canClaim ? "Забрать награду" : "Награда уже получена"}
-            </Text>
-          </Pressable>
-        </ScrollView>
+            <View style={styles.fireWrap}>
+              <Image source={fire} style={styles.fire} resizeMode="contain" />
+              <Text style={styles.streak}>{displayStreak}</Text>
+            </View>
+
+            <View style={styles.weekCard}>
+              <View style={styles.weekRow}>
+                {DAYS.map((day, index) => {
+                  const date = new Date(today);
+                  date.setDate(today.getDate() + index - todayIndex);
+                  const isToday = index === todayIndex;
+                  const isCompleted = rewardDates.has(localDateKey(date));
+                  const source = isToday
+                    ? dayActive
+                    : isCompleted
+                      ? dayCompleted
+                      : dayDefault;
+                  return (
+                    <View key={day} style={styles.dayCol}>
+                      <Text style={styles.dayLabel}>{day}</Text>
+                      <View style={styles.dayIconWrap}>
+                        <Image
+                          source={source}
+                          style={styles.dayState}
+                          resizeMode="contain"
+                        />
+                        {isToday ? (
+                          <View style={styles.checkBadge}>
+                            <Text style={styles.checkText}>✓</Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.rewardRow}>
+              <Text style={styles.rewardTitle}>Ежедневная награда</Text>
+              <Text style={styles.rewardValue}>
+                +10 <Text style={styles.coin}>●</Text>
+              </Text>
+            </View>
+
+            <Pressable
+              disabled={!canClaim}
+              style={[styles.cta, !canClaim && styles.ctaDisabled]}
+              onPress={claimReward}
+            >
+              <Text style={styles.ctaText}>
+                {canClaim ? "Забрать награду" : "Награда уже получена"}
+              </Text>
+            </Pressable>
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -191,6 +193,7 @@ const styles = StyleSheet.create({
     padding: 16,
     flexShrink: 1,
   },
+  sheetScroll: { flexGrow: 0 },
   close: {
     position: "absolute",
     right: 14,

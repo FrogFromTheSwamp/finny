@@ -14,6 +14,7 @@ export default function HomeScreen() {
   const petName = useProfileStore((s) => s.petName || 'Финни');
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
   const tutorialStage = useGameStore((s) => s.tutorialStage);
+  const grown = useGameStore((s) => s.completedChapters.includes('budget'));
   const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
   const [rewardOpen, setRewardOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function HomeScreen() {
     <View style={styles.root}>
       <ImageBackground source={homeRoom} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <GameHud />
-      <View style={styles.petArea}>
+      <View style={[styles.petArea, grown && styles.grownPetArea]}>
         <PetWithHat
           color={color}
           onPress={() => {
@@ -82,4 +83,5 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   petArea: { position: 'absolute', left: 0, right: 0, bottom: '15%', alignItems: 'center' },
+  grownPetArea: { transform: [{ scale: 0.86 }] },
 });

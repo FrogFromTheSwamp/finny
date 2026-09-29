@@ -10,6 +10,7 @@ import theoryOn from '@/assets/library/learning/nodes/theory-available.png';
 import { CHAPTERS, LESSON_BY_ID, type LessonType } from '@/features/learning/content';
 import { GameHud } from '@/game/components/GameHud';
 import { useGameStore } from '@/game/store/gameStore';
+import { sessionUi } from '@/game/sessionUi';
 import { fontFamily } from '@/ui/theme';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -48,6 +49,8 @@ export default function LearnScreen() {
 
   useEffect(() => {
     if (!lessonsOpen) return;
+    // Load the lesson flow and its local asset references while the map is idle.
+    void import('@/features/learning/lessonFlows');
     const nextChapter = CHAPTERS.find((chapter, index) =>
       (index === 0 || completedChapters.includes(CHAPTERS[index - 1]!.id)) &&
       chapter.lessons.some((id) => !completedLessons.includes(id)),
@@ -62,13 +65,13 @@ export default function LearnScreen() {
     if (openingRef.current) return;
     openingRef.current = true;
     setOpeningLessonId(lessonId);
-    router.push({ pathname: '/lesson/[id]', params: { id: lessonId } });
+    router.navigate({ pathname: '/lesson/[id]', params: { id: lessonId } });
   };
 
   return (
     <View style={styles.root}>
       <GameHud showHunger={false} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentOffset={{ x: 0, y: sessionUi.learnScrollY }} onScroll={(event) => { sessionUi.learnScrollY = event.nativeEvent.contentOffset.y; }} scrollEventThrottle={32} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.screenTitle}>Учёба</Text>
         <Text style={styles.lead}>{lessonsOpen ? (completedChapters.includes('budget') ? 'Проходи уроки по порядку.' : 'Проходи уроки по порядку. После первой главы Финни повзрослеет.') : 'Сначала помоги Финни с едой и создай первую цель — после этого откроется первый урок.'}</Text>
 

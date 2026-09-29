@@ -58,12 +58,12 @@ export default function RootLayout() {
         <Stack.Screen name="streak" />
         <Stack.Screen name="glossary" />
         <Stack.Screen name="parent" />
-        <Stack.Screen name="lesson/[id]" />
+        <Stack.Screen name="lesson/[id]" options={{ gestureEnabled: false }} />
         <Stack.Screen name="lesson-complete" />
-        <Stack.Screen name="chapter-complete" />
+        <Stack.Screen name="chapter-complete" options={{ gestureEnabled: false }} />
         <Stack.Screen name="goal-editor" />
         <Stack.Screen name="goal-detail" />
-        <Stack.Screen name="budget-plan" />
+        <Stack.Screen name="budget-plan" options={{ gestureEnabled: false }} />
         <Stack.Screen name="history" />
         <Stack.Screen name="food-shop" />
       </Stack.Protected>

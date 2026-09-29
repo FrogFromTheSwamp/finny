@@ -40,7 +40,7 @@ export const HATS: HatItem[] = [
     price: 16,
     previewImage: hatDotted,
     wornImage: hatDotted,
-    attachment: { align: 'right', rotation: -18 },
+    attachment: { align: 'right', rotation: 0 },
   },
   {
     id: 'purple',
@@ -48,7 +48,7 @@ export const HATS: HatItem[] = [
     price: 40,
     previewImage: hatPurple,
     wornImage: hatPurple,
-    attachment: { align: 'right', rotation: -16 },
+    attachment: { align: 'right', rotation: 0 },
   },
   {
     id: 'cap',

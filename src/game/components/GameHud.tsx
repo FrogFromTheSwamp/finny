@@ -1,6 +1,7 @@
 import fireIcon from "@/assets/library/ui/icons/fire-solid.png";
 import settingsIcon from "@/assets/library/ui/icons/settings-alt.png";
 import bookIcon from "@/assets/library/ui/icons/book-open.png";
+import { AnimatedNumber } from "@/game/components/AnimatedNumber";
 import { HungerMeter } from "@/game/components/HungerMeter";
 import { TasksModal } from "@/game/components/TasksModal";
 import { useGameStore } from "@/game/store/gameStore";
@@ -43,7 +44,7 @@ function LevelBadge({ value }: { value: number }) {
           transform="rotate(-92 29 29)"
         />
       </Svg>
-      <Text style={styles.levelText}>{value}</Text>
+      <AnimatedNumber value={value} style={styles.levelText} />
     </View>
   );
 }
@@ -65,14 +66,14 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
         <View style={styles.leftGroup}>
           <LevelBadge value={level} />
           <View style={styles.coinBadge}>
-            <Text style={styles.number}>{coins}</Text>
+            <AnimatedNumber value={coins} style={styles.number} />
             <View style={styles.coinDot} />
           </View>
         </View>
         <View style={styles.topTools}>
           <Pressable
             style={styles.fireButton}
-            onPress={() => router.push("/streak")}
+            onPress={() => router.navigate("/streak")}
             accessibilityLabel={`Серия входов: ${streak}`}
           >
             <Image source={fireIcon} style={styles.fire} resizeMode="contain" />
@@ -80,7 +81,7 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
           </Pressable>
           <Pressable
             style={styles.settings}
-            onPress={() => router.push("/settings")}
+            onPress={() => router.navigate("/settings")}
             accessibilityLabel="Настройки"
           >
             <Image source={settingsIcon} style={styles.settingsIcon} resizeMode="contain" />

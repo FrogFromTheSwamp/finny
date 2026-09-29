@@ -47,14 +47,14 @@ const styles = StyleSheet.create({
   bubble: {
     width: "95%",
     maxWidth: 368,
-    aspectRatio: 1232 / 717,
+    minHeight: 190,
+    paddingVertical: 22,
     justifyContent: "center",
   },
 
   text: {
     color: "#2A1105",
     width: "100%",
-    flexShrink: 1,
     textAlign: "center",
     lineHeight: 22,
     paddingHorizontal: 30,

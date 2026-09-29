@@ -5,7 +5,8 @@ import dayDefault from '@/assets/library/ui/calendar/day-default.png';
 import fire from '@/assets/library/ui/effects/streak-fire.png';
 import { useGameStore } from '@/game/store/gameStore';
 import { fontFamily } from '@/ui/theme';
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -30,6 +31,8 @@ type Props = {
 };
 
 export function DailyRewardModal({ visible, onClose, onClaimed, mandatory = false }: Props) {
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const streak = useGameStore((s) => s.streakDays);
   const lastRewardDate = useGameStore((s) => s.lastRewardDate);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
@@ -48,7 +51,7 @@ export function DailyRewardModal({ visible, onClose, onClaimed, mandatory = fals
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={() => { if (!mandatory) onClose(); }}>
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+        <ScrollView style={[styles.sheet, { maxHeight: height * 0.86 }]} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 18 }} bounces={false} showsVerticalScrollIndicator={false}>
           {!mandatory ? (
             <Pressable style={styles.close} onPress={onClose} accessibilityLabel="Закрыть"><Image source={closeIcon} style={styles.closeIcon} resizeMode="contain" /></Pressable>
           ) : null}
@@ -82,7 +85,7 @@ export function DailyRewardModal({ visible, onClose, onClaimed, mandatory = fals
           <Pressable disabled={!canClaim} style={[styles.cta, !canClaim && styles.ctaDisabled]} onPress={claimReward}>
             <Text style={styles.ctaText}>{canClaim ? 'Забрать награду' : 'Награда уже получена'}</Text>
           </Pressable>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -90,7 +93,7 @@ export function DailyRewardModal({ visible, onClose, onClaimed, mandatory = fals
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: 'rgba(40,14,0,0.30)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#F3F1EF', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 18, paddingTop: 22, paddingBottom: 30, minHeight: 468 },
+  sheet: { backgroundColor: '#F3F1EF', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 18, paddingTop: 22 },
   close: { position: 'absolute', right: 14, top: 12, zIndex: 3, width: 34, height: 34, borderRadius: 17, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   closeIcon: { width: 22, height: 22 },
   title: { fontFamily: fontFamily.bold, color: '#2A160A', fontSize: 24, textAlign: 'center' },

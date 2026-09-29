@@ -46,6 +46,7 @@ function WornHat({ source, attachment, grown }: { source: ImageSourcePropType; a
     styles.hat,
     grown && styles.grownHat,
     attachment.align === 'right' ? (grown ? styles.grownHatRight : styles.hatRight) : (grown ? styles.grownHatCenter : styles.hatCenter),
+    attachment.offsetY ? { marginTop: attachment.offsetY } : null,
     { opacity, transform: [{ rotate: `${attachment.rotation}deg` }] },
   ]} />;
 }

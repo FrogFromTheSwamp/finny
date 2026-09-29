@@ -10,6 +10,7 @@ export type HatId = 'none' | 'dotted' | 'purple' | 'cap' | 'crown';
 export type HatAttachment = {
   align: 'center' | 'right';
   rotation: number;
+  offsetY?: number;
 };
 
 export type HatItem = {
@@ -48,7 +49,7 @@ export const HATS: HatItem[] = [
     price: 40,
     previewImage: hatPurple,
     wornImage: hatPurple,
-    attachment: { align: 'right', rotation: 0 },
+    attachment: { align: 'right', rotation: 0, offsetY: 7 },
   },
   {
     id: 'cap',

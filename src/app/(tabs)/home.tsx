@@ -6,7 +6,6 @@ import { PetSpeechBubble } from '@/game/components/PetSpeechBubble';
 import { PetWithHat } from '@/game/components/PetWithHat';
 import { showGameDialog } from '@/game/services/dialogService';
 import { useGameStore } from '@/game/store/gameStore';
-import { useTutorialHintStore } from '@/game/services/tutorialHintStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useEffect, useState } from 'react';
 import { ImageBackground, StyleSheet, View } from 'react-native';
@@ -17,7 +16,6 @@ export default function HomeScreen() {
   const tutorialStage = useGameStore((s) => s.tutorialStage);
   const setTutorialStage = useGameStore((s) => s.setTutorialStage);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
-  const showHint = useTutorialHintStore((s) => s.showHint);
   const [rewardOpen, setRewardOpen] = useState(false);
   const [showSpeech, setShowSpeech] = useState(false);
 
@@ -38,11 +36,11 @@ export default function HomeScreen() {
 
   const finishSpeech = () => {
     setShowSpeech(false);
-    if (tutorialStage === 1) {
-      setTutorialStage(2);
-      // Питомец договорил про голод — показываем руку на вкладке "Еда".
-      showHint('tab-food');
-    }
+    // tutorialStage становится 2 сразу после первой реплики — этого
+    // достаточно, чтобы и в таббаре (иконка "Еда"), и на кухне (плюсик)
+    // сама рука появилась по условию tutorialStage === 2, без отдельного
+    // стора подсказок.
+    if (tutorialStage === 1) setTutorialStage(2);
     if (tutorialStage === 5) setTutorialStage(6);
   };
 

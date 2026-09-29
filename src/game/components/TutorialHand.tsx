@@ -1,35 +1,44 @@
-import hand from '@/assets/library/ui/tap-hand.png';
-import { useEffect, useRef } from 'react';
-import { Animated, Image, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { useEffect } from 'react';
+import { Image, StyleSheet } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
-const TUTORIAL_HANDS_ENABLED = false;
-type TutorialHandProps = { style?: StyleProp<ViewStyle>; rotate?: string };
+import handPointer from '@/assets/library/ui/arrows/arrow-hint.png';
 
-export function TutorialHand(props: TutorialHandProps) {
-  if (!TUTORIAL_HANDS_ENABLED) return null;
-  return <AnimatedTutorialHand {...props} />;
-}
+type Props = {
+  style?: StyleProp<ViewStyle>;
+  rotate?: string;
+};
 
-function AnimatedTutorialHand({ style, rotate = '0deg' }: TutorialHandProps) {
-  const bob = useRef(new Animated.Value(0)).current;
+export function TutorialHand({ style, rotate = '0deg' }: Props) {
+  const bounce = useSharedValue(0);
+
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bob, { toValue: -8, duration: 520, useNativeDriver: true }),
-        Animated.timing(bob, { toValue: 0, duration: 520, useNativeDriver: true }),
-      ]),
+    bounce.value = withRepeat(
+      withSequence(withTiming(6, { duration: 450 }), withTiming(0, { duration: 450 })),
+      -1,
+      true,
     );
-    loop.start();
-    return () => loop.stop();
-  }, [bob]);
+  }, [bounce]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: bounce.value }, { rotate }],
+  }));
+
   return (
-    <Animated.View pointerEvents="none" style={[styles.wrap, style, { transform: [{ translateY: bob }, { rotate }] }]}>
-      <Image source={hand} style={styles.image} resizeMode="contain" />
+    <Animated.View pointerEvents="none" style={[styles.wrap, style, animatedStyle]}>
+      <Image source={handPointer} style={styles.hand} resizeMode="contain" />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', zIndex: 50, width: 58, height: 70 },
-  image: { width: '100%', height: '100%' },
+  wrap: { position: 'absolute' },
+  hand: { width: 40, height: 40 },
 });

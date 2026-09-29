@@ -35,16 +35,29 @@ export function PetSpeechBubble({ lines, onFinish }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: "absolute", top: "35%", left: 24, right: 24 },
-  bubble: {
-    alignSelf: "flex-start",
-    minWidth: 180,
-    maxWidth: "86%",
-    minHeight: 108,
-    justifyContent: "center",
-    paddingHorizontal: 22,
-    paddingTop: 16,
-    paddingBottom: 34,
+  wrap: {
+    position: "absolute",
+    top: "35%",
+    left: 0,
+    right: 10,
+    alignItems: "center",
+    paddingHorizontal: 16,
   },
-  text: { color: "#2A1105" },
+
+  bubble: {
+    width: "95%",
+    maxWidth: 368,
+    aspectRatio: 1232 / 717,
+    justifyContent: "center",
+  },
+
+  text: {
+    color: "#2A1105",
+    width: "100%",
+    flexShrink: 1,
+    textAlign: "center",
+    lineHeight: 22,
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+  },
 });

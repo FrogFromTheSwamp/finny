@@ -1,15 +1,14 @@
+import wardrobeRoom from '@/assets/library/scenes/wardrobe.png';
 import leftArrow from '@/assets/library/ui/arrows/left.png';
 import rightArrow from '@/assets/library/ui/arrows/right.png';
-import categoryHatIcon from '@/assets/library/wardrobe/categories/hats.png';
-import wardrobeRoom from '@/assets/library/scenes/wardrobe.png';
 import type { PetColorId } from '@/content/petColors';
 import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
 import { GameHud } from '@/game/components/GameHud';
 import { PetWithHat } from '@/game/components/PetWithHat';
 import { TutorialHand } from '@/game/components/TutorialHand';
 import { showGameDialog } from '@/game/services/dialogService';
-import { useGameStore } from '@/game/store/gameStore';
 import { sessionUi } from '@/game/sessionUi';
+import { useGameStore } from '@/game/store/gameStore';
 import { HATS } from '@/game/wardrobe';
 import { useProfileStore } from '@/store/profileStore';
 import { fontFamily } from '@/ui/theme';
@@ -120,10 +119,6 @@ export default function WardrobeShopScreen() {
       <ImageBackground source={wardrobeRoom} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <GameHud showHunger={false} />
       <View style={[styles.petArea, grown && styles.grownPetArea]}><PetWithHat color={color} hatId={hat.id} /></View>
-      <Pressable style={styles.categoryIcon} onPress={() => { const firstHat = HATS.findIndex((item) => item.id !== 'none'); if (firstHat >= 0) { indexRef.current = firstHat; setIndex(firstHat); } }} accessibilityRole="button" accessibilityLabel="Категория Шапки">
-        <View style={styles.categoryIconCircle}><Image source={categoryHatIcon} style={styles.categoryIconImage} resizeMode="contain" /></View>
-        <Text style={styles.categoryIconLabel}>Шапки</Text>
-      </Pressable>
       <View style={styles.categoryBox}>
         <Pressable onPress={() => move(-1)} style={styles.arrow} accessibilityLabel="Предыдущая вещь">
           <Image source={leftArrow} style={styles.arrowImage} resizeMode="contain" />
@@ -165,10 +160,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   petArea: { position: 'absolute', left: 0, right: 0, bottom: '22%', alignItems: 'center' },
   grownPetArea: { transform: [{ scale: 0.86 }] },
-  categoryIcon: { position: 'absolute', top: '37%', right: 15, width: 78, alignItems: 'center', justifyContent: 'center' },
-  categoryIconCircle: { width: 58, height: 58, borderRadius: 29, backgroundColor: '#fff', borderWidth: 2, borderColor: '#4A2818', alignItems: 'center', justifyContent: 'center' },
-  categoryIconImage: { width: 43, height: 43 },
-  categoryIconLabel: { marginTop: 3, fontFamily: fontFamily.bold, fontSize: 11, color: '#2A1105' },
   categoryBox: { position: 'absolute', left: 14, right: 14, bottom: 110, height: 90, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   arrow: { width: 52, height: 58, alignItems: 'center', justifyContent: 'center' },
   arrowImage: { width: 48, height: 50 },

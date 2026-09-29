@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  backHand: { top: 24, left: 12 },
-  appleHand: { top: 10, right: -18 },
+  backHand: { top: -30, left: -8 },
+  appleHand: { top: 0, right: 30 },
   backButton: {
     width: 32,
     height: 42,

@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   priceText: { fontFamily: fontFamily.semiBold, color: '#2A1105', fontSize: 12 },
   priceCoin: { color: '#F2A900', fontSize: 15 },
   ownedLabel: { marginTop: 2, fontFamily: fontFamily.semiBold, color: '#47762E', fontSize: 11 },
-  hatHand: { top: -48, right: -24 },
+  hatHand: { top: -40, right: 50 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(35,18,8,.42)', alignItems: 'center', justifyContent: 'center', padding: 22 },
   modalCard: { width: '100%', maxWidth: 370, borderRadius: 22, backgroundColor: '#F7F4F1', padding: 20 },
   modalHat: { width: 92, height: 84, alignSelf: 'center', marginBottom: 3 },

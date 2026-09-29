@@ -28,6 +28,12 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
           const iconName = iconNames[index] ?? "home";
           const itemHeight = Math.min(focused ? 76 : 68, itemWidth * 0.94);
           const iconSize = Math.min(focused ? 44 : 40, itemWidth * 0.58);
+          // Подсказка в таббаре нужна, только пока пользователь ЕЩЁ НЕ
+          // на этой вкладке — как только он на неё перешёл (focused),
+          // дальше подсказывает уже сам экран (плюсик на кухне и т.д.),
+          // и держать две стрелки одновременно смысла нет.
+          const showFoodHint = iconName === "food" && tutorialStage === 2 && !focused;
+          const showWardrobeHint = iconName === "shop" && tutorialStage === 6 && !focused;
           return (
             <Pressable
               key={route.key}
@@ -52,7 +58,7 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
                 pressed && styles.pressed,
               ]}
             >
-              {iconName === "food" && tutorialStage === 2 ? (
+              {showFoodHint || showWardrobeHint ? (
                 <TutorialHand style={styles.tabHintHand} rotate="-12deg" />
               ) : null}
               <TabIcon name={iconName} size={iconSize} />

@@ -4,11 +4,11 @@
     "slug": "finny",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./src/assets/branding/finny-logo.png",
+    "icon": "./src/assets/branding/finny-app-icon.png",
     "scheme": "finny",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./src/assets/branding/finny-logo.png",
+      "icon": "./src/assets/branding/finny-app-icon.png",
       "bundleIdentifier": "finny.lct",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -17,7 +17,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./src/assets/branding/finny-logo.png"
+        "foregroundImage": "./src/assets/branding/finny-app-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "finny.lct"

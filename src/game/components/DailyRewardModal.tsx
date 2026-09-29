@@ -5,7 +5,8 @@ import fire from "@/assets/library/ui/effects/streak-fire.png";
 import closeIcon from "@/assets/library/ui/icons/close.png";
 import { useGameStore } from "@/game/store/gameStore";
 import { fontFamily } from "@/ui/theme";
-import { Image, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
@@ -51,6 +52,8 @@ export function DailyRewardModal({
   onClaimed,
   mandatory = false,
 }: Props) {
+  const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const streak = useGameStore((s) => s.streakDays);
   const lastRewardDate = useGameStore((s) => s.lastRewardDate);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
@@ -82,7 +85,7 @@ export function DailyRewardModal({
       }}
     >
       <View style={styles.backdrop}>
-        <ScrollView style={[styles.sheet, { maxHeight: height * 0.86 }]} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) + 18 }} bounces={false} showsVerticalScrollIndicator={false}>
+        <View style={[styles.sheet, { maxHeight: height * 0.86 }]}>
           {!mandatory ? (
             <Pressable
               style={styles.close}
@@ -96,7 +99,7 @@ export function DailyRewardModal({
               />
             </Pressable>
           ) : null}
-
+          <ScrollView style={styles.sheetScroll} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) }} bounces={false} showsVerticalScrollIndicator={false}>
           <View style={styles.fireWrap}>
             <Image source={fire} style={styles.fire} resizeMode="contain" />
             <Text style={styles.streak}>{displayStreak}</Text>
@@ -151,7 +154,8 @@ export function DailyRewardModal({
               {canClaim ? "Забрать награду" : "Награда уже получена"}
             </Text>
           </Pressable>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
@@ -171,7 +175,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F1EF",
     borderRadius: 24,
     padding: 16,
+    flexShrink: 1,
   },
+  sheetScroll: { flexGrow: 0 },
   close: {
     position: "absolute",
     right: 14,

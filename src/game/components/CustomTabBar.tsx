@@ -1,4 +1,6 @@
 import { TabIcon } from "@/game/components/TabIcon";
+import { TutorialPointer } from "@/game/components/TutorialPointer";
+import { useTutorialHintStore } from "@/game/services/tutorialHintStore";
 import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -7,6 +9,8 @@ const iconNames = ["learn", "goals", "home", "food", "shop"] as const;
 export function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const activeHint = useTutorialHintStore((s) => s.activeHint);
+  const clearHint = useTutorialHintStore((s) => s.clearHint);
   const barWidth = Math.min(width * 0.94, 368);
   const itemWidth = barWidth / state.routes.length;
   const itemMargin = Math.min(4, itemWidth * 0.04);
@@ -34,6 +38,9 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
                 descriptors[route.key]?.options.tabBarAccessibilityLabel
               }
               onPress={() => {
+                if (iconName === "food" && activeHint === "tab-food") {
+                  clearHint();
+                }
                 const event = navigation.emit({
                   type: "tabPress",
                   target: route.key,
@@ -49,6 +56,9 @@ export function CustomTabBar({ state, descriptors, navigation }: any) {
                 pressed && styles.pressed,
               ]}
             >
+              {iconName === "food" && activeHint === "tab-food" ? (
+                <TutorialPointer style={styles.tabHintPointer} />
+              ) : null}
               <TabIcon name={iconName} size={iconSize} />
             </Pressable>
           );
@@ -93,4 +103,8 @@ const styles = StyleSheet.create({
     borderColor: "#534122",
   },
   pressed: { transform: [{ scale: 0.96 }] },
+  tabHintPointer: {
+    top: -38,
+    alignSelf: "center",
+  },
 });

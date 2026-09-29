@@ -54,11 +54,10 @@ const styles = StyleSheet.create({
 
   text: {
     color: "#2A1105",
-    width: "100%",
-    flexShrink: 1,
+    width: "76%",
+    alignSelf: "center",
     textAlign: "center",
     lineHeight: 22,
-    paddingHorizontal: 30,
     paddingBottom: 16,
   },
 });

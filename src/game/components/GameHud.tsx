@@ -12,10 +12,10 @@ import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
 
-function LevelBadge({ value }: { value: number }) {
+function LevelBadge({ value, xp }: { value: number; xp: number }) {
   const r = 25;
   const circumference = 2 * Math.PI * r;
-  const progress = Math.min(0.82, 0.2 + ((value - 1) % 5) * 0.13);
+  const progress = ((Math.max(0, xp) % 100) / 100);
   return (
     <View style={styles.levelBadge}>
       <Svg
@@ -55,6 +55,7 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
   const [tasksOpen, setTasksOpen] = useState(false);
   const coins = useGameStore((s) => s.coins);
   const level = useGameStore((s) => s.level);
+  const xp = useGameStore((s) => s.xp);
   const streak = useGameStore((s) => s.streakDays);
   const hunger = useGameStore((s) => s.hunger);
   return (
@@ -64,7 +65,7 @@ export function GameHud({ showHunger = true }: { showHunger?: boolean }) {
     >
       <View style={styles.topRow}>
         <View style={styles.leftGroup}>
-          <LevelBadge value={level} />
+          <LevelBadge value={level} xp={xp} />
           <View style={styles.coinBadge}>
             <AnimatedNumber value={coins} style={styles.number} />
             <View style={styles.coinDot} />

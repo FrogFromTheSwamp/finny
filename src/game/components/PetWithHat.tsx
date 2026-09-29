@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react';
-import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native';
-import { Animated, StyleSheet, View } from 'react-native';
 import type { PetColorId } from '@/content/petColors';
 import { PetSprite, type PetEmotion } from '@/game/components/PetSprite';
 import { useGameStore } from '@/game/store/gameStore';
 import { HAT_BY_ID, type HatAttachment, type HatId } from '@/game/wardrobe';
+import { useEffect, useRef } from 'react';
+import type { ImageSourcePropType, StyleProp, ViewStyle } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
 
 type Props = {
   color: PetColorId;
@@ -46,6 +46,7 @@ function WornHat({ source, attachment, grown }: { source: ImageSourcePropType; a
     styles.hat,
     grown && styles.grownHat,
     attachment.align === 'right' ? (grown ? styles.grownHatRight : styles.hatRight) : (grown ? styles.grownHatCenter : styles.hatCenter),
+    attachment.offsetY ? { marginTop: attachment.offsetY } : null,
     { opacity, transform: [{ rotate: `${attachment.rotation}deg` }] },
   ]} />;
 }

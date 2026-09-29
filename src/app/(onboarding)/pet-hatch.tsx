@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Image,
   ImageBackground,
@@ -11,12 +11,14 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import meadowBg from "@/assets/library/scenes/field.png";
 import { HATCH_CAPTIONS } from "@/content/hatchStages";
@@ -39,7 +41,6 @@ const INPUT_LEFT = 16;
 const INPUT_TOP = 674;
 const INPUT_WIDTH = 380;
 const INPUT_HEIGHT = 52;
-const INPUT_KEYBOARD_GAP = 60;
 const TEXT_COLOR = "#1E0C00";
 const INPUT_BORDER = "#5B4134";
 const BURST_DURATION_MS = 900;
@@ -50,47 +51,25 @@ const SHAKE_STEP_MS = 55;
 type Phase = "cracking" | "bursting" | "pet-only" | "naming";
 
 export default function PetHatchScreen() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  const initialHeight = useRef(height).current;
+  const insets = useSafeAreaInsets();
   const scale = width / DESIGN_WIDTH;
   const scaleValue = (value: number) => value * scale;
   const storedColor = useProfileStore((state) => state.petColorId);
   const completeOnboarding = useProfileStore(
     (state) => state.completeOnboarding,
   );
-  const screenRef = useRef<View>(null);
   const color: PetColorId = storedColor || "brown";
   const assets = PET_ASSETS[color];
   const [stageIndex, setStageIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("cracking");
   const [petName, setPetName] = useState("");
-  const [keyboardTop, setKeyboardTop] = useState<number | null>(null);
-  const [screenTop, setScreenTop] = useState(0);
   const eggShake = useSharedValue(0);
 
   const eggShakeStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${eggShake.value}deg` }],
   }));
-
-  const updateScreenTop = () => {
-    screenRef.current?.measureInWindow((_x, y) => setScreenTop(y));
-  };
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener(
-      "keyboardDidShow",
-      (event) => {
-        setKeyboardTop(event.endCoordinates.screenY);
-        updateScreenTop();
-      },
-    );
-    const hideSubscription = Keyboard.addListener("keyboardDidHide", () =>
-      setKeyboardTop(null),
-    );
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
 
   useEffect(() => {
     if (phase !== "bursting") return;
@@ -104,15 +83,10 @@ export default function PetHatchScreen() {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  const inputTop = useMemo(() => {
-    const regularTop = scaleValue(INPUT_TOP);
-    if (keyboardTop === null) return regularTop;
-    const keyboardTopInScreen = keyboardTop - screenTop;
-    return Math.min(
-      regularTop,
-      keyboardTopInScreen - scaleValue(INPUT_HEIGHT + INPUT_KEYBOARD_GAP),
-    );
-  }, [keyboardTop, scale, screenTop]);
+  const closedInputOffset = -Math.max(
+    insets.bottom + 16,
+    initialHeight - scaleValue(INPUT_TOP + INPUT_HEIGHT),
+  );
 
   const triggerEggShake = () => {
     eggShake.value = withSequence(
@@ -142,7 +116,7 @@ export default function PetHatchScreen() {
   };
 
   return (
-    <View ref={screenRef} onLayout={updateScreenTop} style={styles.screen}>
+    <View style={styles.screen}>
       <StatusBar style="dark" />
       <ImageBackground
         source={meadowBg}
@@ -227,32 +201,35 @@ export default function PetHatchScreen() {
           >
             Какой хорошенький!{"\n"}Как его назовёшь?
           </Text>
-          <TextInput
-            accessibilityLabel="Имя персонажа"
-            value={petName}
-            onChangeText={setPetName}
-            onSubmitEditing={submitName}
-            placeholder="Имя персонажа"
-            placeholderTextColor={INPUT_BORDER}
-            maxLength={20}
-            autoCorrect={false}
-            autoCapitalize="sentences"
-            returnKeyType="done"
-            blurOnSubmit
-            style={[
-              styles.nameInput,
-              {
-                left: scaleValue(INPUT_LEFT),
-                top: inputTop,
-                width: scaleValue(INPUT_WIDTH),
-                height: scaleValue(INPUT_HEIGHT),
-                borderRadius: scaleValue(8),
-                borderWidth: Math.max(1, scaleValue(1)),
-                paddingHorizontal: scaleValue(14),
-                fontSize: scaleValue(18),
-              },
-            ]}
-          />
+          <KeyboardStickyView
+            style={[styles.nameInputDock, { left: scaleValue(INPUT_LEFT), width: scaleValue(INPUT_WIDTH) }]}
+            offset={{ closed: closedInputOffset, opened: 0 }}
+          >
+            <TextInput
+              accessibilityLabel="Имя персонажа"
+              value={petName}
+              onChangeText={setPetName}
+              onSubmitEditing={submitName}
+              placeholder="Имя персонажа"
+              placeholderTextColor={INPUT_BORDER}
+              maxLength={20}
+              autoCorrect={false}
+              autoCapitalize="sentences"
+              returnKeyType="done"
+              blurOnSubmit
+              style={[
+                styles.nameInput,
+                {
+                  width: "100%",
+                  height: scaleValue(INPUT_HEIGHT),
+                  borderRadius: scaleValue(8),
+                  borderWidth: Math.max(1, scaleValue(1)),
+                  paddingHorizontal: scaleValue(14),
+                  fontSize: scaleValue(18),
+                },
+              ]}
+            />
+          </KeyboardStickyView>
         </>
       )}
     </View>
@@ -274,13 +251,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   nameInput: {
-    position: "absolute",
     backgroundColor: "#FFFFFF",
     borderColor: INPUT_BORDER,
     color: INPUT_BORDER,
     paddingVertical: 0,
     textAlignVertical: "center",
   },
+  nameInputDock: { position: "absolute", bottom: 0 },
   eggImage: {
     position: 'absolute',
     left: 20,

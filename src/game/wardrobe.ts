@@ -1,8 +1,8 @@
 import type { ImageSourcePropType } from 'react-native';
 
-import hatCap from '@/assets/library/wardrobe/items/green-cap.png';
-import hatGold from '@/assets/library/wardrobe/items/gold-hat.png';
 import hatDotted from '@/assets/library/wardrobe/items/blue-dotted-hat.png';
+import hatGold from '@/assets/library/wardrobe/items/gold-hat.png';
+import hatCap from '@/assets/library/wardrobe/items/green-cap.png';
 import hatPurple from '@/assets/library/wardrobe/items/violet-hat.png';
 
 export type HatId = 'none' | 'dotted' | 'purple' | 'cap' | 'crown';
@@ -10,6 +10,7 @@ export type HatId = 'none' | 'dotted' | 'purple' | 'cap' | 'crown';
 export type HatAttachment = {
   align: 'center' | 'right';
   rotation: number;
+  offsetY?: number;
 };
 
 export type HatItem = {
@@ -48,7 +49,7 @@ export const HATS: HatItem[] = [
     price: 40,
     previewImage: hatPurple,
     wornImage: hatPurple,
-    attachment: { align: 'right', rotation: 0 },
+    attachment: { align: 'right', rotation: 0, offsetY: 7 },
   },
   {
     id: 'cap',

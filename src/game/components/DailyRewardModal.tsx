@@ -64,8 +64,6 @@ export function DailyRewardModal({
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const streak = useGameStore((s) => s.streakDays);
-  const { height } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const lastRewardDate = useGameStore((s) => s.lastRewardDate);
   const canClaim = useGameStore((s) => s.canClaimDailyReward());
   const claim = useGameStore((s) => s.claimDailyReward);
@@ -117,7 +115,6 @@ export function DailyRewardModal({
               />
             </Pressable>
           ) : null}
-          <ScrollView style={styles.sheetScroll} contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 16) }} bounces={false} showsVerticalScrollIndicator={false}>
           <View style={styles.fireWrap}>
             <Image source={fire} style={styles.fire} resizeMode="contain" />
             <Text style={styles.streak}>{displayStreak}</Text>
@@ -172,8 +169,7 @@ export function DailyRewardModal({
               {canClaim ? "Забрать награду" : "Награда уже получена"}
             </Text>
           </Pressable>
-          </ScrollView>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -195,7 +191,6 @@ const styles = StyleSheet.create({
     padding: 16,
     flexShrink: 1,
   },
-  sheetScroll: { flexGrow: 0 },
   close: {
     position: "absolute",
     right: 14,

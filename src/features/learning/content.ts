@@ -6,7 +6,7 @@ import bankCard from '@/assets/library/learning/items/bank-card.png';
 import handCoins from '@/assets/library/learning/items/hand-coins.png';
 import subtraction from '@/assets/library/learning/items/subtraction.png';
 import division from '@/assets/library/learning/items/division-count.png';
-import elephant from '@/assets/library/learning/items/elephant.png';
+import elephant from '@/assets/library/learning/lesson/purple-elephant-card.png';
 import piggyBank from '@/assets/library/learning/items/piggy-bank-5.png';
 
 export type ChapterId = 'budget' | 'savings' | 'payments';

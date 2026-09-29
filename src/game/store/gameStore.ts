@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-import type { GoalTemplateId } from "@/features/goals/catalog";
+import { isGoalTemplateAvailable, type GoalTemplateId } from "@/features/goals/catalog";
 import { FOOD_BY_ID, type FoodId } from "@/game/catalog";
 import {
   makeTestGameData,
@@ -91,7 +91,7 @@ type GameState = {
     templateId: GoalTemplateId,
     name: string,
     target: number,
-  ) => GoalRecord;
+  ) => GoalRecord | null;
   depositPiggy: (amount: number) => boolean;
   withdrawPiggy: (amount: number) => boolean;
   purchaseGoal: (goalId: string) => boolean;
@@ -384,8 +384,10 @@ export const useGameStore = create<GameState>()(
         set({ budgetPlan: { need, want, save: 100 - need - want } });
       },
       addGoal: (templateId, name, target) => {
+        if (templateId === 'party-hat' && get().ownedHats.includes('dotted')) return null;
         const existing = get().goals.find((goal) => goal.templateId === templateId);
         if (existing) return existing;
+        if (!isGoalTemplateAvailable(templateId, get().goals, get().ownedHats)) return null;
         const goal: GoalRecord = {
           id: `${templateId}-${Date.now()}`,
           templateId,
@@ -425,7 +427,7 @@ export const useGameStore = create<GameState>()(
       },
       purchaseGoal: (goalId) => {
         const goal = get().goals.find((g) => g.id === goalId);
-        if (!goal || goal.purchasedAt || get().piggy < goal.target || get().goals.some((g) => g.templateId === goal.templateId && !!g.purchasedAt)) return false;
+        if (!goal || goal.purchasedAt || get().piggy < goal.target || get().goals.some((g) => g.templateId === goal.templateId && !!g.purchasedAt) || (goal.templateId === 'party-hat' && get().ownedHats.includes('dotted'))) return false;
         set((state) => ({
           piggy: state.piggy - goal.target,
           goals: state.goals.map((g) =>

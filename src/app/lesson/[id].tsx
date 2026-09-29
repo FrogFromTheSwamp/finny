@@ -10,9 +10,12 @@ import piggy1 from '@/assets/library/learning/lesson/piggy-1.png';
 import piggy3 from '@/assets/library/learning/lesson/piggy-3.png';
 import piggy5 from '@/assets/library/learning/lesson/piggy-5.png';
 import trayArt from '@/assets/library/learning/lesson/tray.png';
+import YesNoButtons from '@/assets/library/learning/lesson/yes-no-buttons.svg';
+import PayCoinChoices from '@/assets/library/learning/lesson/pay-coin-choices.svg';
 import { FinnyButton } from '@/components/FinnyButton';
 import type { PetColorId } from '@/content/petColors';
 import { LESSON_BY_ID } from '@/features/learning/content';
+import { GOAL_TEMPLATES, isGoalTemplateAvailable } from '@/features/goals/catalog';
 import {
   LESSON_FLOWS,
   PRIORITY_NOW,
@@ -71,6 +74,8 @@ export default function LessonScreen() {
   const flow = LESSON_FLOWS[lessonId] ?? [];
   const completeLesson = useGameStore((s) => s.completeLesson);
   const goals = useGameStore((s) => s.goals);
+  const ownedHats = useGameStore((s) => s.ownedHats);
+  const hasAvailableGoal = GOAL_TEMPLATES.some((item) => isGoalTemplateAvailable(item.id, goals, ownedHats));
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
   const restoredStep = () => Math.min(Math.max(0, sessionUi.lessonStep[lessonId] ?? 0), Math.max(0, flow.length - 1));
   const [index, setIndex] = useState(restoredStep);
@@ -370,6 +375,7 @@ export default function LessonScreen() {
       return;
     }
     if (step.kind === 'goal') {
+      if (!hasAvailableGoal) { finish(); return; }
       if (pendingGoal.current) return;
       goalBaseline.current = goals.length;
       pendingGoal.current = true;
@@ -385,6 +391,7 @@ export default function LessonScreen() {
 
   const footerLabel = () => {
     if (sheet) return sheet.button;
+    if (step.kind === 'goal' && !hasAvailableGoal) return 'Завершить урок';
     if (step.kind === 'cover' || step.kind === 'story' || step.kind === 'groups' || step.kind === 'goal') return step.button;
     if (step.kind === 'pick') return 'Дальше';
     if (step.kind === 'pay') return payPhase === 'change' ? 'Проверить' : 'Заплатить';
@@ -434,6 +441,7 @@ export default function LessonScreen() {
           })}
           onDragLock={setDragLocked}
           onMistake={noteMistake}
+          hasAvailableGoal={hasAvailableGoal}
         />}
       </ScrollView>
       {showFooter ? <View style={styles.footer}><FinnyButton label={footerLabel()} onPress={onFooter} /></View> : null}
@@ -457,7 +465,7 @@ function AnimatedProgressFill({ progress }: { progress: number }) {
 }
 
 function StepBody({
-  step, color, selected, onToggle, askBalance, numberValue, onNumber, cardIndex, onChoose, pick, onPick, priorityRef, payRef, onPayPhase, onSorted, onDragLock, onMistake,
+  step, color, selected, onToggle, askBalance, numberValue, onNumber, cardIndex, onChoose, pick, onPick, priorityRef, payRef, onPayPhase, onSorted, onDragLock, onMistake, hasAvailableGoal,
 }: {
   step: FlowStep;
   color: PetColorId;
@@ -476,20 +484,20 @@ function StepBody({
   onSorted: () => void;
   onDragLock: (locked: boolean) => void;
   onMistake: () => void;
+  hasAvailableGoal: boolean;
 }) {
   if (step.kind === 'cover' || step.kind === 'story') {
     return (
       <View>
         {step.kind === 'cover' ? <Text style={styles.kicker}>{step.kicker}</Text> : null}
-        <Text style={styles.title}>{step.title}</Text>
+        <Text style={[styles.title, step.artLayout === 'large-card' && styles.cardTitle]}>{step.title}</Text>
         {step.body ? <Text style={styles.body}>{step.body}</Text> : null}
         {step.kind === 'cover' && step.week ? <WeekRow /> : null}
-        <ArtView art={step.art} color={color} compact={step.kind === 'cover' && !!step.marks} />
+        <ArtView art={step.art} color={color} compact={step.kind === 'cover' && !!step.marks} layout={step.artLayout} />
+        {step.kind === 'story' && step.caption ? <Text style={styles.caption}>{step.caption}</Text> : null}
         {step.kind === 'cover' && step.marks ? (
           <View style={[styles.marks, styles.marksCompact]}>
-            <Image source={crossArt} style={styles.mark} resizeMode="contain" />
-            <View style={styles.markDivider} />
-            <Image source={checkArt} style={styles.mark} resizeMode="contain" />
+            <YesNoButtons width={200} height={72} />
           </View>
         ) : null}
       </View>
@@ -512,8 +520,8 @@ function StepBody({
   if (step.kind === 'goal') {
     return (
       <View>
-        <Text style={styles.title}>{step.title}</Text>
-        <Text style={styles.body}>{step.body}</Text>
+        <Text style={styles.title}>{hasAvailableGoal ? step.title : 'Отличная работа!'}</Text>
+        <Text style={styles.body}>{hasAvailableGoal ? step.body : 'Все доступные товары уже куплены или добавлены в цели. Можно завершить урок.'}</Text>
         <ArtView art="pet" color={color} />
       </View>
     );
@@ -606,12 +614,12 @@ function StepBody({
   return null;
 }
 
-function ArtView({ art, color, compact = false }: { art?: Art; color: PetColorId; compact?: boolean }) {
+function ArtView({ art, color, compact = false, layout }: { art?: Art; color: PetColorId; compact?: boolean; layout?: 'large-card' | 'large' }) {
   if (!art) return null;
   if (art === 'pet') {
     return <View style={[styles.pet, compact && styles.petCompact]}><PetWithHat color={color} emotion="happy" forceChild /></View>;
   }
-  return <Image source={art} style={[styles.hero, compact && styles.heroCompact]} resizeMode="contain" />;
+  return <Image source={art} style={[styles.hero, compact && styles.heroCompact, layout === 'large-card' && styles.heroLargeCard, layout === 'large' && styles.heroLarge]} resizeMode="contain" />;
 }
 
 function WeekRow() {
@@ -679,14 +687,10 @@ function SwipeCardView({ text, onChoose }: { text: string; onChoose: (agree: boo
       <View {...pan.panHandlers} style={styles.swipeCard}>
         <Text style={styles.swipeText}>{text}</Text>
       </View>
-      <View style={styles.marks}>
-        <Pressable onPress={() => onChoose(false)} accessibilityLabel="Неверно">
-          <Image source={crossArt} style={styles.mark} resizeMode="contain" />
-        </Pressable>
-        <View style={styles.markDivider} />
-        <Pressable onPress={() => onChoose(true)} accessibilityLabel="Верно">
-          <Image source={checkArt} style={styles.mark} resizeMode="contain" />
-        </Pressable>
+      <View style={styles.answerButtons}>
+        <YesNoButtons width={200} height={72} />
+        <Pressable onPress={() => onChoose(false)} accessibilityLabel="Неверно" style={styles.noButton} />
+        <Pressable onPress={() => onChoose(true)} accessibilityLabel="Верно" style={styles.yesButton} />
       </View>
     </View>
   );
@@ -1106,10 +1110,9 @@ const PayBoard = forwardRef<PayHandle, { onPhase: (phase: PayPhase) => void }>(f
         </View>
       </View>
       <View style={styles.coinChoices}>
+        <PayCoinChoices width={298} height={50} />
         {PAY_VALUES.map((value) => (
-          <Pressable key={value} onPress={() => add(value)} style={styles.coinChoice} accessibilityLabel={`Монета ${value}`}>
-            <CoinChip value={value} size={44} />
-          </Pressable>
+          <Pressable key={value} onPress={() => add(value)} style={[styles.coinChoice, { left: PAY_VALUES.indexOf(value) * 62 }]} accessibilityLabel={`Монета ${value}`} />
         ))}
       </View>
     </View>
@@ -1127,8 +1130,12 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 120 },
   kicker: { fontFamily: fontFamily.medium, fontSize: 13, color: '#6E625A', textAlign: 'right', marginBottom: 12 },
   title: { fontFamily: fontFamily.bold, fontSize: 26, color: '#24160F', lineHeight: 32 },
+  cardTitle: { fontSize: 24, lineHeight: 29 },
   body: { marginTop: 12, fontFamily: fontFamily.medium, fontSize: 16, lineHeight: 22, color: '#3C312B' },
+  caption: { marginTop: 16, fontFamily: fontFamily.bold, fontSize: 20, lineHeight: 25, color: '#24160F' },
   hero: { width: '100%', height: 230, marginTop: 22 },
+  heroLargeCard: { height: undefined, aspectRatio: 1, marginTop: 20 },
+  heroLarge: { height: 320 },
   heroCompact: { height: 160, marginTop: 8 },
   heroCard: { width: '100%', height: 180, marginBottom: 8 },
   pet: { height: 230, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
@@ -1139,6 +1146,9 @@ const styles = StyleSheet.create({
   weekLabel: { fontFamily: fontFamily.medium, fontSize: 11, color: '#6D625B' },
   marks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 22, marginTop: 18 },
   marksCompact: { marginTop: 2 },
+  answerButtons: { alignSelf: 'center', width: 200, height: 72, marginTop: 90 },
+  noButton: { position: 'absolute', left: 0, top: 0, width: 72, height: 72 },
+  yesButton: { position: 'absolute', right: 0, top: 0, width: 72, height: 72 },
   mark: { width: 64, height: 64 },
   markDivider: { width: 1, height: 36, backgroundColor: '#D5D0CC' },
   group: { marginTop: 16 },
@@ -1196,11 +1206,11 @@ const styles = StyleSheet.create({
   piggy: { width: 104, height: 92, alignItems: 'center', justifyContent: 'flex-end' },
   piggyHot: { transform: [{ scale: 1.12 }] },
   piggyImage: { width: 96, height: 84 },
-  trayWrap: { marginTop: 16, height: 210, alignItems: 'center', justifyContent: 'center' },
-  tray: { width: 260, height: 190 },
+  trayWrap: { marginTop: 36, height: 270, alignItems: 'center', justifyContent: 'center' },
+  tray: { width: 320, height: 245 },
   trayCoins: { position: 'absolute', width: 180, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 4 },
-  coinChoices: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-  coinChoice: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+  coinChoices: { alignSelf: 'center', width: 298, height: 50, marginTop: 24 },
+  coinChoice: { position: 'absolute', top: 0, width: 50, height: 50 },
   coinFallback: { alignItems: 'center', justifyContent: 'center' },
   coinFallbackText: { fontFamily: fontFamily.bold, color: '#fff', fontSize: 14 },
 });

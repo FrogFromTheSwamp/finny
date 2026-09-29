@@ -1,6 +1,6 @@
 import piggy from '@/assets/library/learning/items/piggy-bank-5.png';
 import partyHat from '@/assets/library/wardrobe/items/blue-dotted-hat.png';
-import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
+import { GOAL_TEMPLATE_BY_ID, GOAL_TEMPLATES, isGoalTemplateAvailable } from '@/features/goals/catalog';
 import { AnimatedNumber } from '@/game/components/AnimatedNumber';
 import { GameHud } from '@/game/components/GameHud';
 import { useGameStore } from '@/game/store/gameStore';
@@ -23,6 +23,7 @@ function GoalProgress({ percent }: { percent: number }) {
 export default function GoalsScreen() {
   const router = useRouter();
   const goals = useGameStore((s) => s.goals);
+  const ownedHats = useGameStore((s) => s.ownedHats);
   const transactions = useGameStore((s) => s.transactions);
   const completedChapters = useGameStore((s) => s.completedChapters);
   const tutorialStage = useGameStore((s) => s.tutorialStage);
@@ -52,10 +53,11 @@ export default function GoalsScreen() {
   const purchasedTemplates = new Set(goals.filter((g) => !!g.purchasedAt).map((g) => g.templateId));
   const shownTemplates = new Set<string>();
   const activeGoals = goals.filter((g) => {
-    if (g.purchasedAt || purchasedTemplates.has(g.templateId) || shownTemplates.has(g.templateId)) return false;
+    if (g.purchasedAt || purchasedTemplates.has(g.templateId) || shownTemplates.has(g.templateId) || (g.templateId === 'party-hat' && ownedHats.includes('dotted'))) return false;
     shownTemplates.add(g.templateId);
     return true;
   });
+  const hasAvailableGoal = GOAL_TEMPLATES.some((item) => isGoalTemplateAvailable(item.id, goals, ownedHats));
   const planUnlocked = completedChapters.includes('budget');
   const readyHatGoal = useMemo(() => activeGoals.find((g) => g.templateId === 'party-hat' && piggyBalance >= g.target), [activeGoals, piggyBalance]);
 
@@ -141,7 +143,7 @@ export default function GoalsScreen() {
           <View style={styles.simpleText}><Text style={styles.simpleTitle}>План расходов</Text><Text style={styles.simpleSub}>{planUnlocked ? 'Нужно · Хочу · Отложу' : 'Откроется после первой главы'}</Text></View><Text style={styles.chev}>›</Text>
         </Pressable>
 
-        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Цели</Text><Pressable style={styles.addButton} onPress={() => router.navigate('/goal-editor')}><Text style={styles.addButtonText}>Добавить цель</Text></Pressable></View>
+        <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>Цели</Text>{hasAvailableGoal ? <Pressable style={styles.addButton} onPress={() => router.navigate('/goal-editor')}><Text style={styles.addButtonText}>Добавить цель</Text></Pressable> : null}</View>
         {activeGoals.length ? (
           <ScrollView ref={cardsScrollRef} horizontal onContentSizeChange={() => { if (!cardsRestoredRef.current) { cardsRestoredRef.current = true; cardsScrollRef.current?.scrollTo({ x: initialCardsScrollX, animated: false }); } }} onScroll={(event) => { sessionUi.goalsCardsScrollX = event.nativeEvent.contentOffset.x; }} scrollEventThrottle={32} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.goalRow}>
             {activeGoals.map((goal) => {
@@ -156,7 +158,7 @@ export default function GoalsScreen() {
             })}
           </ScrollView>
         ) : (
-          <Pressable onPress={() => router.navigate('/goal-editor')} style={styles.emptyGoal}><Text style={styles.emptyPlus}>＋</Text><Text style={styles.emptyTitle}>Добавь первую цель</Text></Pressable>
+          hasAvailableGoal ? <Pressable onPress={() => router.navigate('/goal-editor')} style={styles.emptyGoal}><Text style={styles.emptyPlus}>＋</Text><Text style={styles.emptyTitle}>Добавь первую цель</Text></Pressable> : <Text style={styles.emptyTitle}>Все доступные товары уже куплены или добавлены в цели</Text>
         )}
 
         <Pressable onPress={() => router.navigate('/history')} style={styles.simpleRow}>

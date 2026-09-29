@@ -4,13 +4,13 @@ import meal from '@/assets/library/food/meals/meal-1.png';
 import candy from '@/assets/library/food/sweets/candy.png';
 import vitamin from '@/assets/library/food/vitamins/vitamin-c.png';
 import bicycle from '@/assets/library/learning/items/bicycle.png';
-import elephant from '@/assets/library/learning/items/elephant.png';
+import elephant from '@/assets/library/learning/lesson/purple-elephant-card.png';
 import iceCream from '@/assets/library/learning/items/ice-cream.png';
 import laptop from '@/assets/library/learning/items/laptop.png';
 import notebook from '@/assets/library/learning/items/notebook.png';
 import pen from '@/assets/library/learning/items/pen.png';
 import phone from '@/assets/library/learning/items/phone.png';
-import rollerSkates from '@/assets/library/learning/items/roller-skates.png';
+import rollerSkates from '@/assets/library/learning/lesson/roller-skates-card.png';
 import soapBubbles from '@/assets/library/learning/items/soap-bubbles.png';
 import car from '@/assets/library/learning/items/car.png';
 import teddy from '@/assets/library/learning/items/teddy.png';
@@ -51,8 +51,8 @@ export type SwipeCard = {
 };
 
 export type FlowStep =
-  | { kind: 'cover'; kicker: string; title: string; body?: string; art?: Art; week?: boolean; marks?: boolean; button: string }
-  | { kind: 'story'; title: string; body: string; art?: Art; button: string; arrow?: boolean }
+  | { kind: 'cover'; kicker: string; title: string; body?: string; art?: Art; artLayout?: 'large-card' | 'large'; week?: boolean; marks?: boolean; button: string }
+  | { kind: 'story'; title: string; body: string; caption?: string; art?: Art; artLayout?: 'large-card' | 'large'; button: string; arrow?: boolean }
   | { kind: 'groups'; title: string; body: string; groups: { label: string; lines: string[] }[]; button: string }
   | { kind: 'shop'; title: string; purseLabel: string; purse: number; items: ShopItem[]; task: 'week' | 'trip' | 'balance' }
   | { kind: 'priority' }
@@ -270,13 +270,16 @@ const savings1: FlowStep[] = [
     title: 'Мечта и цель: в чём разница между ними?',
     body: 'Что это за зверь эта ваша цель?',
     art: elephant,
+    artLayout: 'large-card',
     button: 'Начать',
   },
   {
     kind: 'story',
-    title: 'Мечта — это «я хочу», а цель — хочу и знаю, как этого добиться!',
-    body: 'Простой пример. Можно мечтать о велосипеде. Но лучше поставить цель: накопить на него 10 000 ₽ к лету. Так мечта превращается в конкретный план.',
+    title: 'Простой пример:',
+    body: 'Можно мечтать о велосипеде. Но лучше поставить цель, допустим, накопить на него 10 000 ₽ к лету.',
+    caption: 'Так мечта превращается в конкретный план',
     art: bicycleHero,
+    artLayout: 'large-card',
     button: 'Дальше',
   },
   {
@@ -388,6 +391,7 @@ const payments2: FlowStep[] = [
     kicker: 'Глава 3, Урок 2',
     title: 'Заплати за покупку',
     art: rollerSkates,
+    artLayout: 'large-card',
     button: 'Начать',
   },
   { kind: 'pay' },

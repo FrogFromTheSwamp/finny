@@ -14,8 +14,9 @@ export default function GoalDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const goals = useGameStore((s) => s.goals);
+  const ownedHats = useGameStore((s) => s.ownedHats);
   const goal = goals.find((g) => g.id === String(id));
-  const alreadyPurchased = goals.some((g) => g.id !== goal?.id && g.templateId === goal?.templateId && !!g.purchasedAt);
+  const alreadyPurchased = goals.some((g) => g.id !== goal?.id && g.templateId === goal?.templateId && !!g.purchasedAt) || (goal?.templateId === 'party-hat' && ownedHats.includes('dotted'));
   const color = (useProfileStore((s) => s.petColorId) || 'brown') as PetColorId;
   const piggyBalance = useGameStore((s) => s.piggy);
   const purchase = useGameStore((s) => s.purchaseGoal);

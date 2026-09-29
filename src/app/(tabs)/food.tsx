@@ -164,8 +164,8 @@ const styles = StyleSheet.create({
   },
   plusWrap: { position: "relative", width: 60, top:45, alignItems: "center", justifyContent: "center" },
   plusIcon: { width: 50, },
-  plusHand: { top: -54, right: -35 },
-  plateHand: { top: 12, right: "28%" },
+  plusHand: { top: -45, right: 25 },
+  plateHand: { top: -20, right: "50%" },
   inventoryPanel: {
     position: "absolute",
     left: 12,

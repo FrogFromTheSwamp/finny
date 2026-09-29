@@ -8,14 +8,19 @@
     "scheme": "finny",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./src/assets/branding/finny-logo.png"
+      "icon": "./src/assets/branding/finny-logo.png",
+      "bundleIdentifier": "finny.lct",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./src/assets/branding/finny-logo.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "finny.lct"
     },
     "web": {
       "output": "static"
@@ -35,6 +40,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "6b37bb3f-9035-445d-b425-02101fd0b730"
+      }
     }
   }
 }

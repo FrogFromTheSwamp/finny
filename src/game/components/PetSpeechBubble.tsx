@@ -49,15 +49,16 @@ const styles = StyleSheet.create({
     width: "90%",
     maxWidth: 368,
     aspectRatio: 1232 / 717,
-    justifyContent: "flex-start",
+    justifyContent: "center",
   },
 
   text: {
     color: "#2A1105",
     width: "100%",
     flexShrink: 1,
-    textAlign: "left",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    textAlign: "center",
+    lineHeight: 22,
+    paddingHorizontal: 30,
+    paddingBottom: 16,
   },
 });

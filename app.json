@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "finny",
-    "slug": "finny",
+    "slug": "finni",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/branding/finny-logo.png",
@@ -44,7 +44,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "6b37bb3f-9035-445d-b425-02101fd0b730"
+        "projectId": "83941544-373d-499f-8f02-b7b6d811cc18"
       }
     }
   }

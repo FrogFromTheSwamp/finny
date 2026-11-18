@@ -7,12 +7,16 @@ from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 
 from app.db import engine
+from app.routers import auth, family
 
 app = FastAPI(
     title="Finny API",
     version="0.1.0",
     description="Серверная часть обучающей системы Finny",
 )
+
+app.include_router(auth.router)
+app.include_router(family.router)
 
 
 @app.get("/health", tags=["service"])

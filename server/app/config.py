@@ -3,7 +3,7 @@ import os
 
 # Ключ подписи JWT. В разработке есть значение по умолчанию,
 # на настоящем сервере его ОБЯЗАТЕЛЬНО задают через .env.
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-secret-key-change-me-on-real-server")
 JWT_ALGORITHM = "HS256"
 
 ACCESS_TOKEN_TTL_MINUTES = 30  # короткоживущий токен для запросов

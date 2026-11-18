@@ -20,7 +20,7 @@ services:
     build: ./server
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-finny}:${POSTGRES_PASSWORD:-finny}@db:5432/${POSTGRES_DB:-finny}
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me}   # ключ подписи JWT
+      SECRET_KEY: ${SECRET_KEY:-dev-only-secret-key-change-me-on-real-server}   # ключ подписи JWT
       CONTENT_DIR: /content
       WATCHFILES_FORCE_POLLING: "true"   # нужно на Windows, чтобы --reload видел изменения
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

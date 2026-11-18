@@ -1,0 +1,36 @@
+# Запуск всей серверной части одной командой:  docker compose up --build
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-finny}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-finny}
+      POSTGRES_DB: ${POSTGRES_DB:-finny}
+    ports:
+      - "5432:5432"          # чтобы подключаться к базе из DBeaver/pgAdmin
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # данные не пропадают при перезапуске
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-finny} -d ${POSTGRES_DB:-finny}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./server
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-finny}:${POSTGRES_PASSWORD:-finny}@db:5432/${POSTGRES_DB:-finny}
+      CONTENT_DIR: /content
+      WATCHFILES_FORCE_POLLING: "true"   # нужно на Windows, чтобы --reload видел изменения
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server:/code   # правишь код — сервер сам перезапускается; миграции тоже видны с диска
+      - ./content:/content:ro   # учебный контент (JSON), только для чтения
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

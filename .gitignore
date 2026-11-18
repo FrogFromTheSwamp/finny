@@ -68,3 +68,9 @@ Cloud.svg
 
 .expo-web-check
 .playwright-cli
+
+# server
+.env
+__pycache__/
+*.pyc
+.venv/

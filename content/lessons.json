@@ -1,0 +1,646 @@
+{
+  "version": 1,
+  "note": "Каталог уроков и заданий. Задание = одно оцениваемое решение ребёнка. Изменил сценарий задания — увеличь его version.",
+  "lessons": [
+    {
+      "id": "budget-1",
+      "chapter": "budget",
+      "number": 1,
+      "title": "Как распределять монеты?",
+      "type": "theory",
+      "tasks": [
+        {
+          "id": "budget-1.shop.food",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "item": "food",
+            "label": "Еда",
+            "price": 45,
+            "role": "need",
+            "question": "Положить «Еда» в корзину?"
+          }
+        },
+        {
+          "id": "budget-1.shop.vitamins",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "item": "vitamins",
+            "label": "Витамины",
+            "price": 15,
+            "role": "need",
+            "question": "Положить «Витамины» в корзину?"
+          }
+        },
+        {
+          "id": "budget-1.shop.basket",
+          "version": 1,
+          "competency": "BUD-4",
+          "step": "shop",
+          "kind": "basket",
+          "scenario": {
+            "grader": "basket",
+            "purse": 100,
+            "min_left": 20,
+            "max_wants": 1,
+            "min_items": 1,
+            "prices": {
+              "food": 45,
+              "vitamins": 15,
+              "bubbles": 15,
+              "sweets": 20
+            },
+            "roles": {
+              "food": "need",
+              "vitamins": "need",
+              "bubbles": "want",
+              "sweets": "want"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "budget-2",
+      "chapter": "budget",
+      "number": 2,
+      "title": "Распредели бюджет на неделю",
+      "type": "test",
+      "tasks": [
+        {
+          "id": "budget-2.priority.bicycle",
+          "version": 1,
+          "competency": "BUD-2",
+          "step": "priority",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": "now",
+            "item": "bicycle",
+            "label": "Велосипед",
+            "question": "«Велосипед» нужно сейчас или может подождать?"
+          }
+        },
+        {
+          "id": "budget-2.priority.notebook",
+          "version": 1,
+          "competency": "BUD-2",
+          "step": "priority",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": "now",
+            "item": "notebook",
+            "label": "Тетрадь",
+            "question": "«Тетрадь» нужно сейчас или может подождать?"
+          }
+        },
+        {
+          "id": "budget-2.priority.pen",
+          "version": 1,
+          "competency": "BUD-2",
+          "step": "priority",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": "now",
+            "item": "pen",
+            "label": "Ручка",
+            "question": "«Ручка» нужно сейчас или может подождать?"
+          }
+        },
+        {
+          "id": "budget-2.priority.candy",
+          "version": 1,
+          "competency": "BUD-2",
+          "step": "priority",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": "later",
+            "item": "candy",
+            "label": "Конфета",
+            "question": "«Конфета» нужно сейчас или может подождать?"
+          }
+        },
+        {
+          "id": "budget-2.priority.stickers",
+          "version": 1,
+          "competency": "BUD-2",
+          "step": "priority",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": "later",
+            "item": "stickers",
+            "label": "Наклейки",
+            "question": "«Наклейки» нужно сейчас или может подождать?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "budget-3",
+      "chapter": "budget",
+      "number": 3,
+      "title": "Собираемся в поход!",
+      "type": "test",
+      "tasks": [
+        {
+          "id": "budget-3.shop.water",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "item": "water",
+            "label": "Вода",
+            "price": 20,
+            "role": "need",
+            "question": "Положить «Вода» в корзину?"
+          }
+        },
+        {
+          "id": "budget-3.shop.sandwich",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "item": "sandwich",
+            "label": "Сэндвич",
+            "price": 25,
+            "role": "need",
+            "question": "Положить «Сэндвич» в корзину?"
+          }
+        },
+        {
+          "id": "budget-3.shop.raincoat",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "item": "raincoat",
+            "label": "Дождевик",
+            "price": 20,
+            "role": "need",
+            "question": "Положить «Дождевик» в корзину?"
+          }
+        },
+        {
+          "id": "budget-3.shop.ticket",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "item": "ticket",
+            "label": "Билет",
+            "price": 30,
+            "role": "need",
+            "question": "Положить «Билет» в корзину?"
+          }
+        },
+        {
+          "id": "budget-3.shop.stickers",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": false,
+            "item": "stickers",
+            "label": "Наклейки",
+            "price": 15,
+            "role": "want",
+            "question": "Положить «Наклейки» в корзину?"
+          }
+        },
+        {
+          "id": "budget-3.shop.juice",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "shop",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": false,
+            "item": "juice",
+            "label": "Лимонад",
+            "price": 15,
+            "role": "want",
+            "question": "Положить «Лимонад» в корзину?"
+          }
+        },
+        {
+          "id": "budget-3.shop.reserve",
+          "version": 1,
+          "competency": "BUD-4",
+          "step": "shop",
+          "kind": "basket",
+          "scenario": {
+            "grader": "basket",
+            "purse": 125,
+            "min_left": 30,
+            "max_wants": null,
+            "min_items": 1,
+            "prices": {
+              "water": 20,
+              "sandwich": 25,
+              "raincoat": 20,
+              "ticket": 30,
+              "stickers": 15,
+              "juice": 15
+            },
+            "roles": {
+              "water": "need",
+              "sandwich": "need",
+              "raincoat": "need",
+              "ticket": "need",
+              "stickers": "want",
+              "juice": "want"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "budget-4",
+      "chapter": "budget",
+      "number": 4,
+      "title": "Карточки про бюджет",
+      "type": "repetition",
+      "tasks": [
+        {
+          "id": "budget-4.swipe.1",
+          "version": 1,
+          "competency": "BUD-3",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Бюджет — это план, который помогает распределить деньги на разные цели",
+            "question": "Согласен с утверждением?"
+          }
+        },
+        {
+          "id": "budget-4.swipe.2",
+          "version": 1,
+          "competency": "SAV-1",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Если ты хочешь купить дорогую игрушку, можно заранее откладывать на неё деньги",
+            "question": "Согласен с утверждением?"
+          }
+        },
+        {
+          "id": "budget-4.swipe.3",
+          "version": 1,
+          "competency": "BUD-1",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": false,
+            "text": "Желание и необходимость — это одно и то же",
+            "question": "Согласен с утверждением?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "savings-1",
+      "chapter": "savings",
+      "number": 1,
+      "title": "Мечта и цель: в чём разница?",
+      "type": "theory",
+      "tasks": []
+    },
+    {
+      "id": "savings-2",
+      "chapter": "savings",
+      "number": 2,
+      "title": "Сформируй сбережения Финни",
+      "type": "test",
+      "tasks": [
+        {
+          "id": "savings-2.weekly",
+          "version": 1,
+          "competency": "SAV-3",
+          "step": "weekly",
+          "kind": "number",
+          "scenario": {
+            "grader": "number",
+            "expected": 10,
+            "price": 70,
+            "saved": 20,
+            "weeks": 5,
+            "question": "Сколько монет в неделю откладывать, чтобы за 5 недель накопить остаток?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "savings-3",
+      "chapter": "savings",
+      "number": 3,
+      "title": "Рассортируй сбережения Финни",
+      "type": "test",
+      "tasks": [
+        {
+          "id": "savings-3.sort.c1",
+          "version": 1,
+          "competency": "PAY-3",
+          "step": "sort",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": 1,
+            "coin": "c1",
+            "value": 1,
+            "question": "В какую копилку положить монету 1?"
+          }
+        },
+        {
+          "id": "savings-3.sort.c2",
+          "version": 1,
+          "competency": "PAY-3",
+          "step": "sort",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": 5,
+            "coin": "c2",
+            "value": 5,
+            "question": "В какую копилку положить монету 5?"
+          }
+        },
+        {
+          "id": "savings-3.sort.c3",
+          "version": 1,
+          "competency": "PAY-3",
+          "step": "sort",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": 3,
+            "coin": "c3",
+            "value": 3,
+            "question": "В какую копилку положить монету 3?"
+          }
+        },
+        {
+          "id": "savings-3.sort.c4",
+          "version": 1,
+          "competency": "PAY-3",
+          "step": "sort",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": 1,
+            "coin": "c4",
+            "value": 1,
+            "question": "В какую копилку положить монету 1?"
+          }
+        },
+        {
+          "id": "savings-3.sort.c5",
+          "version": 1,
+          "competency": "PAY-3",
+          "step": "sort",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": 5,
+            "coin": "c5",
+            "value": 5,
+            "question": "В какую копилку положить монету 5?"
+          }
+        },
+        {
+          "id": "savings-3.sort.c6",
+          "version": 1,
+          "competency": "PAY-3",
+          "step": "sort",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": 3,
+            "coin": "c6",
+            "value": 3,
+            "question": "В какую копилку положить монету 3?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "savings-4",
+      "chapter": "savings",
+      "number": 4,
+      "title": "Карточки про сбережения",
+      "type": "repetition",
+      "tasks": [
+        {
+          "id": "savings-4.swipe.1",
+          "version": 1,
+          "competency": "SAV-1",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Накопления — это деньги, которые мы откладываем на будущую цель",
+            "question": "Согласен с утверждением?"
+          }
+        },
+        {
+          "id": "savings-4.swipe.2",
+          "version": 1,
+          "competency": "SAV-2",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Перед накоплением полезно решить, на что ты хочешь собрать деньги",
+            "question": "Согласен с утверждением?"
+          }
+        },
+        {
+          "id": "savings-4.swipe.3",
+          "version": 1,
+          "competency": "SAV-1",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Чтобы накопить большую сумму, можно откладывать понемногу",
+            "question": "Согласен с утверждением?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "payments-1",
+      "chapter": "payments",
+      "number": 1,
+      "title": "Как не потратить лишнее",
+      "type": "theory",
+      "tasks": [
+        {
+          "id": "payments-1.shop.basket",
+          "version": 1,
+          "competency": "PAY-1",
+          "step": "shop",
+          "kind": "basket",
+          "scenario": {
+            "grader": "basket",
+            "purse": 100,
+            "min_left": 0,
+            "max_wants": null,
+            "min_items": 1,
+            "prices": {
+              "icecream": 30,
+              "car": 120,
+              "teddy": 70
+            },
+            "roles": {
+              "icecream": "want",
+              "car": "want",
+              "teddy": "want"
+            }
+          }
+        },
+        {
+          "id": "payments-1.shop.remainder",
+          "version": 1,
+          "competency": "PAY-2",
+          "step": "shop",
+          "kind": "remainder",
+          "scenario": {
+            "grader": "remainder",
+            "purse": 100,
+            "prices": {
+              "icecream": 30,
+              "car": 120,
+              "teddy": 70
+            },
+            "question": "Сколько монет останется?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "payments-2",
+      "chapter": "payments",
+      "number": 2,
+      "title": "Заплати за ролики",
+      "type": "test",
+      "tasks": [
+        {
+          "id": "payments-2.pay",
+          "version": 1,
+          "competency": "PAY-3",
+          "step": "pay",
+          "kind": "pay",
+          "scenario": {
+            "grader": "pay",
+            "price": 75,
+            "coins": [
+              1,
+              3,
+              5,
+              10,
+              50
+            ],
+            "question": "Собери монеты, чтобы оплатить ролики за 75"
+          }
+        },
+        {
+          "id": "payments-2.change",
+          "version": 1,
+          "competency": "PAY-2",
+          "step": "pay",
+          "kind": "change",
+          "scenario": {
+            "grader": "change",
+            "price": 75,
+            "question": "Какая должна быть сдача?"
+          }
+        }
+      ]
+    },
+    {
+      "id": "payments-3",
+      "chapter": "payments",
+      "number": 3,
+      "title": "Карточки про покупки",
+      "type": "repetition",
+      "tasks": [
+        {
+          "id": "payments-3.swipe.1",
+          "version": 1,
+          "competency": "PAY-1",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Перед покупкой полезно проверить цену товара",
+            "question": "Согласен с утверждением?"
+          }
+        },
+        {
+          "id": "payments-3.swipe.2",
+          "version": 1,
+          "competency": "PAY-2",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Если товар стоит 300 рублей, а ты даёшь 500 рублей, тебе должны вернуть 200 рублей сдачи",
+            "question": "Согласен с утверждением?"
+          }
+        },
+        {
+          "id": "payments-3.swipe.3",
+          "version": 1,
+          "competency": "SEC-1",
+          "step": "swipe",
+          "kind": "choice",
+          "scenario": {
+            "grader": "choice",
+            "expected": true,
+            "text": "Никому нельзя сообщать PIN-код своей банковской карты",
+            "question": "Согласен с утверждением?"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,6 @@
-"""Загрузка компетенций и графа навыков из content/competencies.json в базу.
+"""Загрузка учебного контента в базу:
+- content/competencies.json — компетенции и граф навыков;
+- content/lessons.json — уроки и задания (Q-матрица: у задания одна компетенция).
 
 Запуск (сервер должен работать):
     docker compose exec api python -m app.seed_content
@@ -16,7 +18,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.db import engine
-from app.models import Competency, CompetencyPrereq
+from app.models import Competency, CompetencyPrereq, Lesson, Task
 
 CONTENT_DIR = Path(os.environ.get("CONTENT_DIR", "/content"))
 
@@ -46,6 +48,61 @@ def check_graph(graph: dict[str, list[str]]) -> None:
     for node in graph:
         if color[node] == white:
             visit(node, [])
+
+
+def seed_lessons(session: Session, competency_ids: set[str]) -> tuple[int, int]:
+    """Уроки обновляются, задания — только добавляются.
+
+    Задание с тем же (id, version), но другим содержанием — ошибка: на старую
+    версию уже могут ссылаться ответы детей. Нужно увеличить version.
+    """
+    data = json.loads((CONTENT_DIR / "lessons.json").read_text(encoding="utf-8"))
+    lessons = data["lessons"]
+
+    lesson_rows = [
+        {key: lesson[key] for key in ("id", "chapter", "number", "title", "type")}
+        for lesson in lessons
+    ]
+    stmt = insert(Lesson).values(lesson_rows)
+    update_cols = {key: stmt.excluded[key] for key in ("chapter", "number", "title", "type")}
+    update_cols["updated_at"] = func.now()
+    session.execute(stmt.on_conflict_do_update(index_elements=["id"], set_=update_cols))
+
+    added = 0
+    seen: set[tuple[str, int]] = set()
+    for lesson in lessons:
+        for task in lesson["tasks"]:
+            key = (task["id"], task["version"])
+            if key in seen:
+                raise ValueError(f"Задание {key} встречается в lessons.json дважды")
+            seen.add(key)
+            if task["competency"] not in competency_ids:
+                raise ValueError(f"Задание {task['id']}: неизвестная компетенция {task['competency']}")
+
+            existing = session.get(Task, key)
+            if existing is None:
+                session.add(
+                    Task(
+                        id=task["id"],
+                        version=task["version"],
+                        lesson_id=lesson["id"],
+                        competency_id=task["competency"],
+                        kind=task["kind"],
+                        scenario=task["scenario"],
+                    )
+                )
+                added += 1
+            elif (
+                existing.scenario != task["scenario"]
+                or existing.competency_id != task["competency"]
+                or existing.lesson_id != lesson["id"]
+            ):
+                raise ValueError(
+                    f"Задание {task['id']} версии {task['version']} изменилось. "
+                    "Увеличь version в lessons.json вместо правки старой версии."
+                )
+    session.flush()
+    return len(lesson_rows), added
 
 
 def main() -> None:
@@ -92,7 +149,11 @@ def main() -> None:
         in_db = set(session.scalars(select(Competency.id)))
         extra = in_db - set(graph)
 
+        lessons_count, tasks_added = seed_lessons(session, in_db)
+        tasks_total = session.scalar(select(func.count()).select_from(Task))
+
     print(f"Компетенций загружено: {len(rows)}, рёбер графа: {len(edges)}")
+    print(f"Уроков: {lessons_count}, новых заданий: {tasks_added}, всего заданий в базе: {tasks_total}")
     if extra:
         print(f"Внимание: в базе есть компетенции, которых нет в JSON: {sorted(extra)}")
 

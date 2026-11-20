@@ -1,3 +1,4 @@
+import { useServerSession } from '@/api/childSession';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GOAL_TEMPLATE_BY_ID } from '@/features/goals/catalog';
 import { CHAPTERS, LESSON_BY_ID } from '@/features/learning/content';
@@ -75,6 +76,7 @@ export default function ParentScreen() {
         onPress: async () => {
           resetGame();
           resetProfile();
+          useServerSession.getState().clear();
           await AsyncStorage.removeItem(PARENT_PIN_KEY);
           router.replace('/welcome');
         },

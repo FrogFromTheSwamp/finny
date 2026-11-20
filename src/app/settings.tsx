@@ -1,3 +1,5 @@
+import { useServerSession } from "@/api/childSession";
+import { ServerStatus } from "@/api/ServerStatus";
 import { useGameStore } from "@/game/store/gameStore";
 import { useProfileStore } from "@/store/profileStore";
 import { Button } from "@/ui/Button";
@@ -9,6 +11,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const resetProfile = useProfileStore((state) => state.resetProfile);
   const resetGame = useGameStore((state) => state.resetGame);
+  const clearServerSession = useServerSession((state) => state.clear);
 
   const confirmReset = () => {
     Alert.alert("Сбросить профиль?", "Питомец и весь прогресс будут удалены.", [
@@ -19,6 +22,8 @@ export default function SettingsScreen() {
         onPress: () => {
           resetGame();
           resetProfile();
+          // Новый питомец — новый профиль на сервере
+          clearServerSession();
           router.replace("/welcome");
         },
       },
@@ -27,6 +32,7 @@ export default function SettingsScreen() {
 
   return (
     <Screen title="Настройки">
+      <ServerStatus />
       <Button
         label="Раздел для взрослого"
         onPress={() => router.push("/parent")}

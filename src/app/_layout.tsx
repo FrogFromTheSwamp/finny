@@ -1,3 +1,4 @@
+import { useServerConnection } from "@/api/useServerConnection";
 import { useGameHydrated } from "@/game/store/gameStore";
 import { useProfileHydrated, useProfileStore } from "@/store/profileStore";
 import {
@@ -25,6 +26,9 @@ export default function RootLayout() {
   });
 
   const ready = hydrated && gameHydrated && fontsLoaded;
+
+  // Регистрация на сервере — только когда ребёнок прошёл онбординг (есть имя и цвет питомца)
+  useServerConnection(ready && onboardingDone);
 
   useEffect(() => {
     if (ready) {

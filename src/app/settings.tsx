@@ -34,6 +34,10 @@ export default function SettingsScreen() {
     <Screen title="Настройки">
       <ServerStatus />
       <Button
+        label="Пригласить взрослого"
+        onPress={() => router.push("/invite-parent")}
+      />
+      <Button
         label="Раздел для взрослого"
         onPress={() => router.push("/parent")}
       />

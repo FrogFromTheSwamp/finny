@@ -89,6 +89,8 @@ class LinkRequest(BaseModel):
 
 class LinkedChild(ChildOut):
     linked_at: datetime
+    # true — ребёнок уже был в списке этого родителя, новая связь не создавалась
+    already_linked: bool = False
 
 
 class ParentMe(BaseModel):

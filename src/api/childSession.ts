@@ -19,7 +19,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { ApiError, apiRequest } from '@/api/client';
-import type { AccessToken, ChildProfile, ChildRegistered } from '@/api/types';
+import type { AccessToken, ChildProfile, ChildRegistered, LinkCode } from '@/api/types';
 
 type ServerSessionState = {
   childId: string | null;
@@ -185,4 +185,9 @@ export async function childRequest<T>(
 /** Проверка связи: «узнаёт ли сервер этого ребёнка». */
 export function fetchChildProfile(): Promise<ChildProfile> {
   return childRequest<ChildProfile>('/children/me');
+}
+
+/** Ребёнок просит код, чтобы показать его родителю. */
+export function requestLinkCode(): Promise<LinkCode> {
+  return childRequest<LinkCode>('/children/me/link-code', { method: 'POST' });
 }

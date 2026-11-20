@@ -105,3 +105,21 @@ def test_too_many_wrong_codes_blocked(client):
     for _ in range(5):
         assert client.post("/family/link", json=body, headers=headers).status_code == 404
     assert client.post("/family/link", json=body, headers=headers).status_code == 429
+
+
+def test_linking_same_child_again_reports_already_linked(client):
+    child = register_child(client)
+    parent = register_parent(client)
+    headers = auth(parent["access_token"])
+
+    first = client.post(
+        "/family/link", json={"code": get_link_code(client, child["access_token"]), "consent": True}, headers=headers
+    )
+    second = client.post(
+        "/family/link", json={"code": get_link_code(client, child["access_token"]), "consent": True}, headers=headers
+    )
+
+    assert first.json()["already_linked"] is False
+    assert second.status_code == 200
+    assert second.json()["already_linked"] is True
+    assert len(client.get("/parents/me", headers=headers).json()["children"]) == 1

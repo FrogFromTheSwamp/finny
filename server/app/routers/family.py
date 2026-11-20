@@ -108,6 +108,7 @@ def link_child(body: LinkRequest, parent: CurrentParent, db: DbSession) -> Linke
 
     link_code.used_at = now
     link = db.get(FamilyLink, (parent.id, child.id))
+    already_linked = link is not None and link.revoked_at is None
     if link is None:
         link = FamilyLink(parent_id=parent.id, child_id=child.id, consent_at=now)
         db.add(link)
@@ -116,7 +117,9 @@ def link_child(body: LinkRequest, parent: CurrentParent, db: DbSession) -> Linke
         link.consent_at = now
     db.commit()
 
-    return LinkedChild(**_child_out(child).model_dump(), linked_at=link.consent_at)
+    return LinkedChild(
+        **_child_out(child).model_dump(), linked_at=link.consent_at, already_linked=already_linked
+    )
 
 
 @router.get("/parents/me", response_model=ParentMe)

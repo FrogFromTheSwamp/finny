@@ -6,7 +6,7 @@ import {
   MIN_TOUCH_SIZE,
   spacing,
 } from "@/ui/theme";
-import { StyleSheet, TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View, type TextInputProps } from "react-native";
 
 type Props = {
   label?: string;
@@ -14,6 +14,10 @@ type Props = {
   onChangeText: (text: string) => void;
   placeholder?: string;
   maxLength?: number;
+  secureTextEntry?: boolean;
+  keyboardType?: TextInputProps["keyboardType"];
+  autoCapitalize?: TextInputProps["autoCapitalize"];
+  autoComplete?: TextInputProps["autoComplete"];
 };
 
 export function TextField({
@@ -22,6 +26,10 @@ export function TextField({
   onChangeText,
   placeholder,
   maxLength,
+  secureTextEntry,
+  keyboardType,
+  autoCapitalize,
+  autoComplete,
 }: Props) {
   return (
     <View style={styles.wrapper}>
@@ -34,6 +42,10 @@ export function TextField({
         placeholderTextColor={colors.textMuted}
         maxLength={maxLength}
         autoCorrect={false}
+        secureTextEntry={secureTextEntry}
+        keyboardType={keyboardType}
+        autoCapitalize={autoCapitalize}
+        autoComplete={autoComplete}
       />
     </View>
   );

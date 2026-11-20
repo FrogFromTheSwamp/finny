@@ -12,6 +12,7 @@ import PayCoinChoices from "@/assets/library/learning/lesson/pay-coin-choices.sv
 import basketArt from "@/assets/library/learning/sort/basket-empty.png";
 import nextIcon from "@/assets/library/ui/icons/arrow-right-circle.png";
 import closeIcon from "@/assets/library/ui/icons/close.png";
+import { useLessonRecorder } from "@/api/useLessonRecorder";
 import { FinnyButton } from "@/components/FinnyButton";
 import type { PetColorId } from "@/content/petColors";
 import { LESSON_BY_ID } from "@/features/learning/content";
@@ -129,6 +130,13 @@ export default function LessonScreen() {
   const advancingRef = useRef(false);
   const priorityRef = useRef<PriorityHandle>(null);
   const payRef = useRef<PayHandle>(null);
+  // Запись ответов ребёнка для сервера (сессия урока, попытки, время на шаг)
+  const {
+    record,
+    complete: completeRecording,
+    markStepStart,
+    stepAge,
+  } = useLessonRecorder(lessonId);
   const scrollRef = useRef<ScrollView>(null);
 
   const setDragLocked = useCallback((locked: boolean) => {
@@ -139,6 +147,7 @@ export default function LessonScreen() {
   const finish = useCallback(() => {
     if (!lesson || finished.current) return;
     finished.current = true;
+    completeRecording();
     delete sessionUi.lessonStep[lesson.id];
     const accuracy = Math.max(60, 100 - mistakesRef.current * 20);
     completeLesson(lesson.id, accuracy);
@@ -146,7 +155,7 @@ export default function LessonScreen() {
       pathname: "/lesson-complete",
       params: { lesson: lesson.id },
     });
-  }, [completeLesson, lesson, router]);
+  }, [completeLesson, completeRecording, lesson, router]);
 
   useEffect(() => {
     setIndex(restoredStep());
@@ -166,6 +175,11 @@ export default function LessonScreen() {
   useEffect(() => {
     sessionUi.lessonStep[lessonId] = index;
   }, [index, lessonId]);
+
+  // Новый шаг, карточка или вопрос — отсюда считаем время ответа
+  useEffect(() => {
+    markStepStart();
+  }, [index, cardIndex, askBalance, payPhase, markStepStart]);
 
   useEffect(() => {
     setSheet(null);
@@ -218,6 +232,12 @@ export default function LessonScreen() {
   const openSheet = (next: Sheet) => setSheet(next);
 
   const checkShop = (shop: Extract<FlowStep, { kind: "shop" }>) => {
+    // Для сервера: каждый товар — отдельное решение, плюс корзина целиком.
+    // Записываются только задания из каталога (content/lessons.json).
+    for (const item of shop.items)
+      record(`${lessonId}.shop.${item.id}`, { choice: selected.includes(item.id) });
+    record(`${lessonId}.shop.basket`, { selected });
+    record(`${lessonId}.shop.reserve`, { selected });
     const chosen = shop.items.filter((item) => selected.includes(item.id));
     const total = chosen.reduce((sum, item) => sum + item.price, 0);
     const needsOk = shop.items
@@ -319,6 +339,7 @@ export default function LessonScreen() {
   };
 
   const checkBalance = (shop: Extract<FlowStep, { kind: "shop" }>) => {
+    record(`${lessonId}.shop.remainder`, { selected, value: Number(numberValue) });
     const total = shop.items
       .filter((item) => selected.includes(item.id))
       .reduce((sum, item) => sum + item.price, 0);
@@ -344,6 +365,10 @@ export default function LessonScreen() {
 
   const checkPriority = () => {
     const now = priorityRef.current?.nowIds() ?? [];
+    for (const item of priorityItems)
+      record(`${lessonId}.priority.${item.id}`, {
+        choice: now.includes(item.id) ? "now" : "later",
+      });
     const exact =
       PRIORITY_NOW.length === now.length &&
       PRIORITY_NOW.every((itemId) => now.includes(itemId));
@@ -368,6 +393,7 @@ export default function LessonScreen() {
   };
 
   const checkWeekly = () => {
+    record(`${lessonId}.weekly`, { value: Number(numberValue) });
     const choice =
       savingsChoices.find((item) => item.id === pick) ?? savingsChoices[0]!;
     if (Number(numberValue) === 10) {
@@ -393,6 +419,7 @@ export default function LessonScreen() {
   const chooseCard = (cards: SwipeCard[], agree: boolean) => {
     const card = cards[cardIndex];
     if (!card) return;
+    record(`${lessonId}.swipe.${cardIndex + 1}`, { choice: agree });
     const right = agree === card.answer;
     if (!right) noteMistake();
     const last = cardIndex >= cards.length - 1;
@@ -406,6 +433,11 @@ export default function LessonScreen() {
   };
 
   const pressPay = () => {
+    const snapshot = payRef.current?.snapshot();
+    if (snapshot?.phase === "pay")
+      record(`${lessonId}.pay`, { coins: snapshot.paid });
+    else if (snapshot)
+      record(`${lessonId}.change`, { paid: snapshot.paid, change: snapshot.change });
     const result = payRef.current?.commit();
     if (result === "short") {
       noteMistake();
@@ -455,6 +487,13 @@ export default function LessonScreen() {
       } else setSheet(null);
       return;
     }
+    // Нажатие в первые 0.4 с после появления шага — почти наверняка случайный
+    // двойной тап по кнопке предыдущего шага. Не проверяем и не записываем.
+    if (
+      ["shop", "priority", "weekly", "pay"].includes(step.kind) &&
+      stepAge() < 400
+    )
+      return;
     if (step.kind === "shop") {
       if (askBalance) checkBalance(step);
       else checkShop(step);
@@ -579,6 +618,9 @@ export default function LessonScreen() {
             }
             onDragLock={setDragLocked}
             onMistake={noteMistake}
+            onSortAnswer={(coinId, piggy) =>
+              record(`${lessonId}.sort.${coinId}`, { choice: piggy })
+            }
             hasAvailableGoal={hasAvailableGoal}
           />
         )}
@@ -653,6 +695,7 @@ function StepBody({
   onSorted,
   onDragLock,
   onMistake,
+  onSortAnswer,
   hasAvailableGoal,
 }: {
   step: FlowStep;
@@ -672,6 +715,7 @@ function StepBody({
   onSorted: () => void;
   onDragLock: (locked: boolean) => void;
   onMistake: () => void;
+  onSortAnswer: (coinId: string, piggy: 1 | 3 | 5) => void;
   hasAvailableGoal: boolean;
 }) {
   if (step.kind === "cover" || step.kind === "story") {
@@ -862,6 +906,7 @@ function StepBody({
         onDragLock={onDragLock}
         onSolved={onSorted}
         onMistake={onMistake}
+        onAnswer={onSortAnswer}
       />
     );
   if (step.kind === "pay")
@@ -1400,10 +1445,12 @@ function CoinSortBoard({
   onDragLock,
   onSolved,
   onMistake,
+  onAnswer,
 }: {
   onDragLock: (locked: boolean) => void;
   onSolved: () => void;
   onMistake: () => void;
+  onAnswer: (coinId: string, piggy: 1 | 3 | 5) => void;
 }) {
   const [sorted, setSorted] = useState<string[]>([]);
   const [hover, setHover] = useState<1 | 3 | 5 | null>(null);
@@ -1419,7 +1466,7 @@ function CoinSortBoard({
     }
   }, [sorted.length]);
 
-  const dropOn = async (value: 1 | 3 | 5, pageX: number, pageY: number) => {
+  const dropOn = async (value: 1 | 3 | 5, pageX: number, pageY: number, coinId: string) => {
     const boxes = await Promise.all(
       PIGGIES.map(async (piggy) => ({
         value: piggy.value,
@@ -1431,6 +1478,7 @@ function CoinSortBoard({
     );
     setHover(null);
     if (!hit) return "miss" as const;
+    onAnswer(coinId, hit.value); // монету положили в копилку — это решение ребёнка
     if (hit.value !== value) {
       onMistake();
       return "wrong" as const;
@@ -1463,7 +1511,7 @@ function CoinSortBoard({
               setHover(hit && hit.value === coin.value ? hit.value : null);
             }}
             onDrop={async (pageX, pageY) => {
-              const result = await dropOn(coin.value, pageX, pageY);
+              const result = await dropOn(coin.value, pageX, pageY, coin.id);
               if (result === "ok")
                 setSorted((items) =>
                   items.includes(coin.id) ? items : [...items, coin.id],
@@ -1584,7 +1632,11 @@ function SortCoin({
   );
 }
 
-type PayHandle = { commit: () => PayResult };
+type PayHandle = {
+  commit: () => PayResult;
+  /** Что сейчас на подносе — для записи ответа до проверки. */
+  snapshot: () => { phase: PayPhase; paid: number[]; change: number[] };
+};
 
 const PayBoard = forwardRef<PayHandle, { onPhase: (phase: PayPhase) => void }>(
   function PayBoard({ onPhase }, ref) {
@@ -1621,6 +1673,11 @@ const PayBoard = forwardRef<PayHandle, { onPhase: (phase: PayPhase) => void }>(
           );
           return changeSum === paidSum - 75 ? "change-ok" : "change-bad";
         },
+        snapshot: () => ({
+          phase: phaseRef.current,
+          paid: [...paidRef.current],
+          change: [...changeRef.current],
+        }),
       }),
       [onPhase],
     );

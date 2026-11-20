@@ -1,12 +1,13 @@
 /**
  * Связь с сервером на уровне всего приложения: при запуске и при каждом
  * возвращении в приложение убеждаемся, что ребёнок зарегистрирован.
- * Позже сюда же добавится отправка накопленных ответов.
+ * и отправляем накопленные ответы.
  */
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 
 import { ensureChildRegistered } from '@/api/childSession';
+import { flushLearning } from '@/api/learningOutbox';
 import { useProfileStore } from '@/store/profileStore';
 
 export function useServerConnection(enabled: boolean) {
@@ -16,7 +17,8 @@ export function useServerConnection(enabled: boolean) {
   useEffect(() => {
     if (!enabled) return;
     const connect = () => {
-      void ensureChildRegistered({ petName, petColorId });
+      // Сначала пропуск, потом отправка накопленных ответов
+      void ensureChildRegistered({ petName, petColorId }).then(flushLearning);
     };
     connect();
     const subscription = AppState.addEventListener('change', (state) => {

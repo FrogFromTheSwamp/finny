@@ -75,3 +75,8 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+
+# ml
+ml/data/
+.venv/
+.ipynb_checkpoints/

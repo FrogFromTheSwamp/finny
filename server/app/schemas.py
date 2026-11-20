@@ -5,8 +5,9 @@
 """
 import uuid
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import AwareDatetime, BaseModel, EmailStr, Field
 
 from app.config import ACCESS_TOKEN_TTL_MINUTES
 
@@ -95,3 +96,60 @@ class ParentMe(BaseModel):
     email: str
     name: str
     children: list[LinkedChild]
+
+
+# ---------- Синхронизация обучения ----------
+
+class SessionIn(BaseModel):
+    """Прохождение урока или тренировочного набора (id создаёт телефон)."""
+
+    id: uuid.UUID
+    kind: Literal["lesson", "practice", "assessment"]
+    lesson_id: str | None = Field(default=None, max_length=40)
+    recommendation_id: uuid.UUID | None = None
+    status: Literal["started", "completed", "abandoned"] = "started"
+    # AwareDatetime: время обязательно с часовым поясом, иначе 422
+    started_at: AwareDatetime
+    finished_at: AwareDatetime | None = None
+
+
+class EventIn(BaseModel):
+    """Один ответ ребёнка на одно задание.
+
+    Поля is_correct здесь нет намеренно: правильность считает сервер.
+    """
+
+    id: uuid.UUID
+    session_id: uuid.UUID | None = None
+    task_id: str = Field(max_length=80)
+    task_version: int = Field(ge=1)
+    attempt_no: int = Field(default=1, ge=1)
+    answer: dict
+    hint_used: bool = False
+    duration_ms: int | None = Field(default=None, ge=0)
+    device_seq: int | None = Field(default=None, ge=0)
+    occurred_at: AwareDatetime
+
+
+class LearningSyncIn(BaseModel):
+    sessions: list[SessionIn] = Field(default_factory=list, max_length=100)
+    events: list[EventIn] = Field(default_factory=list, max_length=500)
+
+
+class ItemResult(BaseModel):
+    """Что сервер сделал с каждым присланным объектом.
+
+    accepted  — сохранён впервые;
+    duplicate — уже был сохранён раньше (повторная отправка), это не ошибка;
+    rejected  — не принят, причина в reason. Повторно слать бесполезно.
+    """
+
+    id: uuid.UUID
+    status: Literal["accepted", "duplicate", "rejected"]
+    is_correct: bool | None = None
+    reason: str | None = None
+
+
+class LearningSyncOut(BaseModel):
+    sessions: list[ItemResult]
+    events: list[ItemResult]

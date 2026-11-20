@@ -5,6 +5,7 @@
 зависимость отвечает 401, и до эндпоинта дело не доходит.
 """
 import uuid
+from dataclasses import dataclass
 from typing import Annotated
 
 import jwt
@@ -13,7 +14,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Child, User
+from app.models import Child, Device, User
 from app.security import decode_access_token
 
 DbSession = Annotated[Session, Depends(get_db)]
@@ -63,3 +64,24 @@ def get_current_child(claims: Annotated[dict, Depends(_claims)], db: DbSession) 
 
 CurrentParent = Annotated[User, Depends(get_current_parent)]
 CurrentChild = Annotated[Child, Depends(get_current_child)]
+
+
+@dataclass
+class ChildAuth:
+    """Ребёнок и устройство, с которого пришёл запрос."""
+
+    child: Child
+    device: Device
+
+
+def get_child_auth(claims: Annotated[dict, Depends(_claims)], db: DbSession) -> ChildAuth:
+    """Как get_current_child, но ещё проверяет, что устройство не отключено."""
+    child = get_current_child(claims, db)
+    device_id = claims.get("device_id")
+    device = db.get(Device, uuid.UUID(device_id)) if device_id else None
+    if device is None or device.child_id != child.id or device.revoked_at is not None:
+        raise _unauthorized("Устройство не найдено или отключено")
+    return ChildAuth(child=child, device=device)
+
+
+CurrentChildAuth = Annotated[ChildAuth, Depends(get_child_auth)]

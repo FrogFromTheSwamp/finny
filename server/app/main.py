@@ -7,7 +7,7 @@ from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 
 from app.db import engine
-from app.routers import auth, family
+from app.routers import auth, family, sync
 
 app = FastAPI(
     title="Finny API",
@@ -17,6 +17,7 @@ app = FastAPI(
 
 app.include_router(auth.router)
 app.include_router(family.router)
+app.include_router(sync.router)
 
 
 @app.get("/health", tags=["service"])

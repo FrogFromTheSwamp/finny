@@ -71,12 +71,13 @@ def bkt_loss(params, paths):
     return -np.sum(peaks + np.log(np.add.reduceat(scaled, offsets)))
 
 
-def fit_bkt(steps):
+def fit_bkt(steps: pd.DataFrame, *, guess_max: float = 0.499, slip_max: float = 0.499,
+            learn_max: float = 0.999) -> np.ndarray:
     paths = bkt_paths(steps)
     fits = []
     for initial in [(0.2, 0.1, 0.25, 0.15), (0.65, 0.02, 0.4, 0.25), (0.4, 0.3, 0.1, 0.05)]:
         fit = minimize(bkt_loss, initial, args=(paths,), method="L-BFGS-B",
-                       bounds=[(0.001, 0.999)] * 2 + [(0.001, 0.499)] * 2)
+                       bounds=[(0.001, 0.999), (0.001, learn_max), (0.001, guess_max), (0.001, slip_max)])
         if fit.success:
             fits.append(fit)
     if not fits:

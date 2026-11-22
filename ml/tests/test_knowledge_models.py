@@ -1,4 +1,5 @@
 """Согласованность обучения BKT с последовательным прогнозом и защита от утечки."""
+import json
 import sys
 from pathlib import Path
 
@@ -7,6 +8,7 @@ import pandas as pd
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from bkt_bounds import DATA, V1, evaluate, load_steps, split_children
 from compare_models import bkt_loss, bkt_paths, learning_steps, predict_bkt
 
 
@@ -41,3 +43,42 @@ def test_only_previous_first_attempts_enter_the_next_step():
     assert steps[["size", "past_correct", "past_wrong"]].values.tolist() == [
         [2, 0, 0], [1, 1, 1], [1, 0, 0]]
 
+
+
+def test_child_split_is_reproducible() -> None:
+    children = [str(i) for i in range(300)]
+    test = children[:60]
+    split = split_children(children, test, 2026)
+    assert split == split_children(children[::-1], test, 2026)
+    assert split["validation"] != split_children(children, test, 2027)["validation"]
+
+
+def test_train_validation_test_are_disjoint() -> None:
+    children = [str(i) for i in range(300)]
+    split = split_children(children, children[:60], 2026)
+    train, validation, test = (set(split[key]) for key in ("train", "validation", "test"))
+    assert (len(train), len(validation), len(test)) == (192, 48, 60)
+    assert train.isdisjoint(validation) and train.isdisjoint(test) and validation.isdisjoint(test)
+    assert train | validation | test == set(children)
+    assert test == set(children[:60])
+
+
+def test_original_bounds_and_split_reproduce_v1() -> None:
+    """Контрольный прогон требует локального sim_v3 той же версии, что и v1."""
+    v1 = json.loads(V1.read_text(encoding="utf-8"))
+    steps = load_steps(DATA, v1["events_sha256"])
+    split = split_children(steps.child_id.unique().tolist(), v1["test_child_ids"], 2026)
+    train = steps.loc[steps.child_id.isin(split["train"] + split["validation"])]
+    test = steps.loc[steps.child_id.isin(split["test"])]
+    assert train.child_id.nunique() == v1["training_children"]
+    assert train["size"].sum() == v1["training_answers"]
+    actual = evaluate(train, test, guess_max=0.499, slip_max=0.499, learn_max=0.999)
+    assert actual["by_skill"].keys() == v1["models"].keys()
+    for skill, row in actual["by_skill"].items():
+        assert row["parameters"] == v1["models"][skill]["BKT"]
+        expected = v1["by_skill"][skill]
+        assert row["metrics"] == {**expected["BKT"], "answers": expected["answers"],
+                                  "children": expected["children"]}
+    expected = v1["test"]
+    assert actual["metrics"] == {**expected["BKT"], "answers": expected["answers"],
+                                 "children": expected["children"]}

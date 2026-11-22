@@ -17,13 +17,13 @@ def test_seed_loads_everything():
     assert count(Competency) == 11
     assert count(CompetencyPrereq) == 9
     assert count(Lesson) == 11
-    assert count(Task) == 35
+    assert count(Task) == 45  # 41 актуальное задание и 4 предыдущие версии
 
 
 def test_seed_can_run_twice():
     seed()
     seed()
-    assert count(Task) == 35
+    assert count(Task) == 45  # 41 актуальное задание и 4 предыдущие версии
 
 
 def test_every_task_has_a_grader():

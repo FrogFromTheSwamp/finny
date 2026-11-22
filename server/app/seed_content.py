@@ -71,7 +71,7 @@ def seed_lessons(session: Session, competency_ids: set[str]) -> tuple[int, int]:
     added = 0
     seen: set[tuple[str, int]] = set()
     for lesson in lessons:
-        for task in lesson["tasks"]:
+        for task in [*lesson.get("previous_versions", []), *lesson["tasks"]]:
             key = (task["id"], task["version"])
             if key in seen:
                 raise ValueError(f"Задание {key} встречается в lessons.json дважды")

@@ -1,3 +1,4 @@
+import catalog from '../../../content/lessons.json';
 import type { ImageSourcePropType } from 'react-native';
 
 import meal from '@/assets/library/food/meals/meal-1.png';
@@ -44,6 +45,7 @@ export type ShopItem = {
 };
 
 export type SwipeCard = {
+  id: string;
   text: string;
   answer: boolean;
   ok: string;
@@ -58,6 +60,7 @@ export type FlowStep =
   | { kind: 'priority' }
   | { kind: 'swipe'; cards: SwipeCard[] }
   | { kind: 'pick' }
+  | { kind: 'practice'; id: string; question: string; expected: number; hint: string }
   | { kind: 'weekly' }
   | { kind: 'sort' }
   | { kind: 'pay' }
@@ -103,68 +106,33 @@ export const savingsChoices = [
 
 export type SavingsChoiceId = (typeof savingsChoices)[number]['id'];
 
-const budgetCards: SwipeCard[] = [
-  {
-    text: 'Бюджет — это план, который помогает распределить деньги на разные цели',
-    answer: true,
-    ok: 'Правильно! Бюджет помогает решить, сколько денег оставить на важные расходы, желания и накопления.',
-    bad: 'Давай вспомним главное: бюджет помогает заранее решить, сколько денег потратить, сколько оставить и сколько отложить.',
-  },
-  {
-    text: 'Если ты хочешь купить дорогую игрушку, можно заранее откладывать на неё деньги',
-    answer: true,
-    ok: 'Правильно! Накопление маленькими суммами помогает постепенно достичь большой цели.',
-    bad: 'Давай вспомним: если откладывать деньги понемногу, со временем можно накопить нужную сумму.',
-  },
-  {
-    text: 'Желание и необходимость — это одно и то же',
-    answer: false,
-    ok: 'Правильно! Необходимость — то, что действительно нужно. Желание — то, что хочется купить или получить.',
-    bad: 'Давай вспомним: то, что нам хочется, не всегда является необходимостью.',
-  },
-];
+type CatalogTask = {
+  id: string;
+  step: string;
+  scenario: { question?: string; expected?: unknown; text?: string };
+  feedback?: { ok: string; bad: string };
+  hint?: string;
+};
 
-const savingsCards: SwipeCard[] = [
-  {
-    text: 'Накопления — это деньги, которые мы откладываем на будущую цель',
-    answer: true,
-    ok: 'Правильно! Накопления помогают собрать деньги на будущую цель, например на велосипед.',
-    bad: 'Попробуй ещё раз! Накопления — это деньги, которые мы оставляем на будущее.',
-  },
-  {
-    text: 'Перед накоплением полезно решить, на что ты хочешь собрать деньги',
-    answer: true,
-    ok: 'Правильно! Цель помогает понять, сколько денег нужно накопить.',
-    bad: 'Давай вспомним: цель помогает понять, зачем ты откладываешь деньги и сколько нужно собрать.',
-  },
-  {
-    text: 'Чтобы накопить большую сумму, можно откладывать понемногу',
-    answer: true,
-    ok: 'Правильно! Даже небольшие суммы постепенно превращаются в большие накопления.',
-    bad: 'Давай вспомним: необязательно откладывать много сразу. Маленькие суммы тоже помогают накопить.',
-  },
-];
+function catalogTasks(lessonId: string): CatalogTask[] {
+  return catalog.lessons.find(lesson => lesson.id === lessonId)!.tasks;
+}
 
-const paymentCards: SwipeCard[] = [
-  {
-    text: 'Перед покупкой полезно проверить цену товара',
-    answer: true,
-    ok: 'Правильно! Перед покупкой полезно сверить цену с тем, сколько денег есть.',
-    bad: 'Попробуй ещё раз! Сначала посмотри на цену и сравни её с тем, сколько у тебя денег.',
-  },
-  {
-    text: 'Если товар стоит 300 рублей, а ты даёшь 500 рублей, тебе должны вернуть 200 рублей сдачи',
-    answer: true,
-    ok: 'Правильно! 500 − 300 = 200 рублей сдачи.',
-    bad: 'Проверим ещё раз: 500 − 300 = 200 рублей. Именно столько должны вернуть.',
-  },
-  {
-    text: 'Никому нельзя сообщать PIN-код своей банковской карты',
-    answer: true,
-    ok: 'Правильно! PIN-код — секретная информация, которую нужно хранить в тайне.',
-    bad: 'Запомни: PIN-код нельзя сообщать другим людям.',
-  },
-];
+function cardsFor(lessonId: string): SwipeCard[] {
+  return catalogTasks(lessonId).filter(task => task.step === 'swipe').map(task => {
+    if (!task.feedback || typeof task.scenario.expected !== 'boolean' || !task.scenario.text)
+      throw new Error(`Некорректная карточка ${task.id}`);
+    return { id: task.id, text: task.scenario.text, answer: task.scenario.expected, ...task.feedback };
+  });
+}
+
+function practiceFor(lessonId: string): FlowStep[] {
+  return catalogTasks(lessonId).filter(task => task.step === 'practice').map(task => {
+    if (!task.hint || !task.scenario.question || typeof task.scenario.expected !== 'number')
+      throw new Error(`Некорректное числовое задание ${task.id}`);
+    return { kind: 'practice', id: task.id, question: task.scenario.question, expected: task.scenario.expected, hint: task.hint };
+  });
+}
 
 const budget1: FlowStep[] = [
   {
@@ -260,7 +228,7 @@ const budget4: FlowStep[] = [
     marks: true,
     button: 'Начать',
   },
-  { kind: 'swipe', cards: budgetCards },
+  { kind: 'swipe', cards: cardsFor('budget-4') },
 ];
 
 const savings1: FlowStep[] = [
@@ -337,7 +305,7 @@ const savings4: FlowStep[] = [
     marks: true,
     button: 'Начать',
   },
-  { kind: 'swipe', cards: savingsCards },
+  { kind: 'swipe', cards: cardsFor('savings-4') },
 ];
 
 const payments1: FlowStep[] = [
@@ -376,6 +344,7 @@ const payments1: FlowStep[] = [
     art: wallet,
     button: 'Дальше',
   },
+  ...practiceFor('payments-1'),
   {
     kind: 'story',
     title: 'Какую покупку может сделать Финни?',
@@ -394,6 +363,7 @@ const payments2: FlowStep[] = [
     artLayout: 'large-card',
     button: 'Начать',
   },
+  ...practiceFor('payments-2'),
   { kind: 'pay' },
 ];
 
@@ -407,7 +377,8 @@ const payments3: FlowStep[] = [
     marks: true,
     button: 'Начать',
   },
-  { kind: 'swipe', cards: paymentCards },
+  ...practiceFor('payments-3'),
+  { kind: 'swipe', cards: cardsFor('payments-3') },
 ];
 
 export const LESSON_FLOWS: Record<string, FlowStep[]> = {

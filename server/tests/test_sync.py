@@ -211,3 +211,12 @@ def test_sync_updates_device_last_sync(client):
     with SessionLocal() as db:
         device = db.get(Device, uuid.UUID(child["device_id"]))
     assert device.last_sync_at is not None
+
+def test_queued_answers_use_the_original_card_version(client):
+    token = register_child(client)["access_token"]
+    old = event("payments-3.swipe.2", {"choice": True})
+    new = {**event("payments-3.swipe.2", {"choice": True}), "task_version": 2}
+    result = sync(client, token, events=[old, new]).json()["events"]
+    assert [(entry["status"], entry["is_correct"]) for entry in result] == [
+        ("accepted", True), ("accepted", False)
+    ]

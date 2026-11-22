@@ -66,7 +66,7 @@ type Sheet = {
   title: string;
   body: string;
   button: string;
-  go: "finish" | "stay" | "next-card";
+  go: "finish" | "stay" | "next-card" | "next-step";
 };
 
 type PayPhase = "pay" | "change";
@@ -419,7 +419,7 @@ export default function LessonScreen() {
   const chooseCard = (cards: SwipeCard[], agree: boolean) => {
     const card = cards[cardIndex];
     if (!card) return;
-    record(`${lessonId}.swipe.${cardIndex + 1}`, { choice: agree });
+    record(card.id, { choice: agree });
     const right = agree === card.answer;
     if (!right) noteMistake();
     const last = cardIndex >= cards.length - 1;
@@ -479,10 +479,11 @@ export default function LessonScreen() {
   const onFooter = () => {
     if (sheet) {
       if (sheet.go === "finish") finish();
-      else if (sheet.go === "next-card") {
+      else if (sheet.go === "next-card" || sheet.go === "next-step") {
         if (advancingRef.current) return;
         advancingRef.current = true;
-        setCardIndex((value) => value + 1);
+        if (sheet.go === "next-step") setIndex((value) => value + 1);
+        else setCardIndex((value) => value + 1);
         setSheet(null);
       } else setSheet(null);
       return;
@@ -490,7 +491,7 @@ export default function LessonScreen() {
     // Нажатие в первые 0.4 с после появления шага — почти наверняка случайный
     // двойной тап по кнопке предыдущего шага. Не проверяем и не записываем.
     if (
-      ["shop", "priority", "weekly", "pay"].includes(step.kind) &&
+      ["shop", "priority", "weekly", "pay", "practice"].includes(step.kind) &&
       stepAge() < 400
     )
       return;
@@ -501,6 +502,21 @@ export default function LessonScreen() {
     }
     if (step.kind === "priority") {
       checkPriority();
+      return;
+    }
+    if (step.kind === "practice") {
+      if (numberValue === "") return;
+      const value = Number(numberValue);
+      record(step.id, { value });
+      const correct = value === step.expected;
+      if (!correct) noteMistake();
+      openSheet({
+        tone: correct ? "good" : "bad",
+        title: correct ? "Верно!" : "Попробуй ещё раз",
+        body: correct ? "" : step.hint,
+        button: correct ? "Дальше" : "Попробовать",
+        go: correct ? "next-step" : "stay",
+      });
       return;
     }
     if (step.kind === "weekly") {
@@ -878,6 +894,14 @@ function StepBody({
             </Pressable>
           );
         })}
+      </View>
+    );
+  }
+  if (step.kind === "practice") {
+    return (
+      <View>
+        <Text style={styles.title}>{step.question}</Text>
+        <Keypad value={numberValue} onChange={onNumber} />
       </View>
     );
   }
@@ -1704,8 +1728,7 @@ const PayBoard = forwardRef<PayHandle, { onPhase: (phase: PayPhase) => void }>(
         </Text>
         {phase === "change" ? (
           <Text style={styles.body}>
-            Оплачено {paidSum}. Сдача должна быть {paidSum - 75}. Какая должна
-            быть сдача?
+            Ролики стоят 75 монет. Оплачено {paidSum}. Сколько монет нужно вернуть?
           </Text>
         ) : null}
         <View style={styles.trayWrap}>

@@ -25,13 +25,14 @@ PERSONAS: dict[str, tuple[float, dict]] = {
     "rare": (0.10, dict(base=0.0, eta=0.30, slip=0.07, guessiness=0.5, visits_per_week=1.5, abandon=0.06, speed=1.0)),
 }
 
-# План недели (нужное, желаемое, накопления, %), порог «пора кормить», выбор еды
+# План недели (нужное, желаемое, накопления, %), порог «пора кормить», выбор еды;
+# nudge_accept — насколько охотно соглашается перенести остаток в копилку в итогах недели
 MONEY_STRATEGIES: dict[str, dict] = {
-    "balanced": dict(plan=(50, 30, 20), feed_below=60, food="cheap", impulsive=0.05, save_leftover=False),
-    "saver": dict(plan=(50, 10, 40), feed_below=45, food="cheap", impulsive=0.02, save_leftover=True),
-    "spender": dict(plan=(60, 40, 0), feed_below=55, food="tasty", impulsive=0.35, save_leftover=False),
-    "impulsive": dict(plan=(50, 30, 20), feed_below=40, food="tasty", impulsive=0.5, save_leftover=False),
-    "forgetful": dict(plan=(50, 30, 20), feed_below=30, food="cheap", impulsive=0.1, save_leftover=False),
+    "balanced": dict(nudge_accept=1.0, plan=(50, 30, 20), feed_below=60, food="cheap", impulsive=0.05, save_leftover=False),
+    "saver": dict(nudge_accept=1.0, plan=(50, 10, 40), feed_below=45, food="cheap", impulsive=0.02, save_leftover=True),
+    "spender": dict(nudge_accept=0.3, plan=(60, 40, 0), feed_below=55, food="tasty", impulsive=0.35, save_leftover=False),
+    "impulsive": dict(nudge_accept=0.6, plan=(50, 30, 20), feed_below=40, food="tasty", impulsive=0.5, save_leftover=False),
+    "forgetful": dict(nudge_accept=0.8, plan=(50, 30, 20), feed_below=30, food="cheap", impulsive=0.1, save_leftover=False),
 }
 
 # Какие денежные стратегии чаще у какого типа ребёнка

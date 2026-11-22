@@ -1,0 +1,386 @@
+{
+  "version": "1.0",
+  "note": "Исходная (некалиброванная) экономика v1.0 + параметр подсказки. Хранится для воспроизводимости калибровки.",
+  "allowance_weekly": 70,
+  "lesson_reward": {
+    "base": 10,
+    "accuracy_bonus": 10,
+    "hungry_multiplier": 0.5,
+    "repeat": 0
+  },
+  "chapter_reward": 15,
+  "feeding_bonus": 3,
+  "parent_task": {
+    "max_reward": 20,
+    "max_per_week": 3
+  },
+  "interest": {
+    "weekly_rate": 0.05,
+    "on": "minimum piggy balance during the week"
+  },
+  "hunger": {
+    "max": 100,
+    "start": 80,
+    "decay_per_day": 15,
+    "full_from": 60,
+    "very_hungry_below": 25,
+    "special_wish_after_hours": 24
+  },
+  "special_treats": [
+    "salmon",
+    "burger",
+    "pizza",
+    "chicken-leg"
+  ],
+  "budget_plan_default": {
+    "need": 50,
+    "want": 30,
+    "save": 20
+  },
+  "week_end_nudge": {
+    "enabled": true,
+    "note": "В итогах недели питомец предлагает перенести остаток кошелька в копилку; ребёнок может отказаться"
+  },
+  "foods": [
+    {
+      "id": "apple",
+      "name": "Яблоко",
+      "category": "fruits",
+      "price": 5,
+      "nutrition": 12,
+      "necessity": "need"
+    },
+    {
+      "id": "banana",
+      "name": "Банан",
+      "category": "fruits",
+      "price": 11,
+      "nutrition": 16,
+      "necessity": "need"
+    },
+    {
+      "id": "pear",
+      "name": "Груша",
+      "category": "fruits",
+      "price": 12,
+      "nutrition": 14,
+      "necessity": "need"
+    },
+    {
+      "id": "orange",
+      "name": "Апельсин",
+      "category": "fruits",
+      "price": 11,
+      "nutrition": 15,
+      "necessity": "need"
+    },
+    {
+      "id": "strawberry",
+      "name": "Клубника",
+      "category": "fruits",
+      "price": 12,
+      "nutrition": 10,
+      "necessity": "need"
+    },
+    {
+      "id": "carrot",
+      "name": "Морковь",
+      "category": "vegetables",
+      "price": 11,
+      "nutrition": 15,
+      "necessity": "need"
+    },
+    {
+      "id": "cucumber",
+      "name": "Огурец",
+      "category": "vegetables",
+      "price": 12,
+      "nutrition": 11,
+      "necessity": "need"
+    },
+    {
+      "id": "eggplant",
+      "name": "Баклажан",
+      "category": "vegetables",
+      "price": 14,
+      "nutrition": 13,
+      "necessity": "need"
+    },
+    {
+      "id": "pumpkin",
+      "name": "Тыква",
+      "category": "vegetables",
+      "price": 15,
+      "nutrition": 20,
+      "necessity": "need"
+    },
+    {
+      "id": "broccoli",
+      "name": "Брокколи",
+      "category": "vegetables",
+      "price": 11,
+      "nutrition": 17,
+      "necessity": "need"
+    },
+    {
+      "id": "pizza",
+      "name": "Пицца",
+      "category": "ready",
+      "price": 18,
+      "nutrition": 24,
+      "necessity": "need"
+    },
+    {
+      "id": "burger",
+      "name": "Бургер",
+      "category": "ready",
+      "price": 20,
+      "nutrition": 28,
+      "necessity": "need"
+    },
+    {
+      "id": "sandwich",
+      "name": "Сэндвич",
+      "category": "ready",
+      "price": 16,
+      "nutrition": 24,
+      "necessity": "need"
+    },
+    {
+      "id": "soup",
+      "name": "Суп",
+      "category": "ready",
+      "price": 14,
+      "nutrition": 22,
+      "necessity": "need"
+    },
+    {
+      "id": "chicken-leg",
+      "name": "Курица",
+      "category": "ready",
+      "price": 18,
+      "nutrition": 25,
+      "necessity": "need"
+    },
+    {
+      "id": "salmon",
+      "name": "Лосось",
+      "category": "ready",
+      "price": 20,
+      "nutrition": 26,
+      "necessity": "need"
+    },
+    {
+      "id": "bread",
+      "name": "Хлеб",
+      "category": "ready",
+      "price": 8,
+      "nutrition": 18,
+      "necessity": "need"
+    },
+    {
+      "id": "cheese",
+      "name": "Сыр",
+      "category": "ready",
+      "price": 12,
+      "nutrition": 20,
+      "necessity": "need"
+    },
+    {
+      "id": "fried-egg",
+      "name": "Яичница",
+      "category": "ready",
+      "price": 10,
+      "nutrition": 19,
+      "necessity": "need"
+    },
+    {
+      "id": "cake",
+      "name": "Торт",
+      "category": "sweets",
+      "price": 16,
+      "nutrition": 17,
+      "necessity": "want"
+    },
+    {
+      "id": "cupcake",
+      "name": "Капкейк",
+      "category": "sweets",
+      "price": 12,
+      "nutrition": 12,
+      "necessity": "want"
+    },
+    {
+      "id": "croissant",
+      "name": "Круассан",
+      "category": "sweets",
+      "price": 11,
+      "nutrition": 15,
+      "necessity": "want"
+    },
+    {
+      "id": "lollipop",
+      "name": "Леденец",
+      "category": "sweets",
+      "price": 8,
+      "nutrition": 8,
+      "necessity": "want"
+    },
+    {
+      "id": "vitamin-a",
+      "name": "Витамин A",
+      "category": "vitamins",
+      "price": 10,
+      "nutrition": 8,
+      "necessity": "need"
+    },
+    {
+      "id": "vitamin-b",
+      "name": "Витамин B",
+      "category": "vitamins",
+      "price": 10,
+      "nutrition": 8,
+      "necessity": "need"
+    },
+    {
+      "id": "vitamin-c",
+      "name": "Витамин C",
+      "category": "vitamins",
+      "price": 10,
+      "nutrition": 8,
+      "necessity": "need"
+    },
+    {
+      "id": "vitamin-d",
+      "name": "Витамин D",
+      "category": "vitamins",
+      "price": 10,
+      "nutrition": 8,
+      "necessity": "need"
+    },
+    {
+      "id": "vitamin-e",
+      "name": "Витамин E",
+      "category": "vitamins",
+      "price": 10,
+      "nutrition": 8,
+      "necessity": "need"
+    },
+    {
+      "id": "vitamin-k",
+      "name": "Витамин K",
+      "category": "vitamins",
+      "price": 10,
+      "nutrition": 8,
+      "necessity": "need"
+    },
+    {
+      "id": "strawberry-milk",
+      "name": "Клубничное молоко",
+      "category": "drinks",
+      "price": 12,
+      "nutrition": 13,
+      "necessity": "need"
+    },
+    {
+      "id": "cocoa",
+      "name": "Какао",
+      "category": "drinks",
+      "price": 10,
+      "nutrition": 15,
+      "necessity": "need"
+    },
+    {
+      "id": "lemonade",
+      "name": "Лимонад",
+      "category": "drinks",
+      "price": 11,
+      "nutrition": 10,
+      "necessity": "need"
+    },
+    {
+      "id": "green-smoothie",
+      "name": "Зелёный смузи",
+      "category": "drinks",
+      "price": 14,
+      "nutrition": 16,
+      "necessity": "need"
+    },
+    {
+      "id": "bubble-tea",
+      "name": "Бабл-ти",
+      "category": "drinks",
+      "price": 15,
+      "nutrition": 14,
+      "necessity": "need"
+    },
+    {
+      "id": "orange-juice",
+      "name": "Апельсиновый сок",
+      "category": "drinks",
+      "price": 11,
+      "nutrition": 12,
+      "necessity": "need"
+    }
+  ],
+  "wardrobe": [
+    {
+      "id": "dotted",
+      "name": "Колпак в точечку",
+      "price": 16
+    },
+    {
+      "id": "cap",
+      "name": "Зелёная кепка",
+      "price": 32
+    },
+    {
+      "id": "purple",
+      "name": "Фиолетовая шляпка",
+      "price": 40
+    },
+    {
+      "id": "crown",
+      "name": "Золотая шляпка",
+      "price": 45
+    }
+  ],
+  "goals": [
+    {
+      "id": "party-hat",
+      "name": "Колпак в точечку",
+      "target": 15,
+      "size": "tutorial"
+    },
+    {
+      "id": "ice-cream",
+      "name": "Большое мороженое",
+      "target": 30,
+      "size": "small"
+    },
+    {
+      "id": "teddy",
+      "name": "Плюшевый мишка",
+      "target": 45,
+      "size": "small"
+    },
+    {
+      "id": "car",
+      "name": "Игрушечная машинка",
+      "target": 70,
+      "size": "medium"
+    },
+    {
+      "id": "bicycle",
+      "name": "Велосипед",
+      "target": 120,
+      "size": "medium"
+    },
+    {
+      "id": "devices",
+      "name": "Ноутбук",
+      "target": 150,
+      "size": "large"
+    }
+  ]
+}

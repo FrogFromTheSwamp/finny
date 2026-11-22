@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description="Генератор синтети�
 parser.add_argument("--children", type=int, default=300, help="сколько виртуальных детей")
 parser.add_argument("--weeks", type=int, default=8, help="сколько недель играют")
 parser.add_argument("--seed", type=int, default=42, help="зерно случайности (тот же seed — те же данные)")
-parser.add_argument("--out", type=Path, default=Path(__file__).resolve().parents[1] / "data" / "sim_v1")
+parser.add_argument("--out", type=Path, default=Path(__file__).resolve().parents[1] / "data" / "sim_v3")
 args = parser.parse_args()
 
 meta = simulate(args.children, args.weeks, args.seed, args.out)

@@ -13,7 +13,9 @@
 """
 from __future__ import annotations
 
+import copy
 import csv
+import dataclasses
 import json
 import math
 import random
@@ -22,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from finny_sim import answers as A
-from finny_sim.content import NO_RETRY_STEPS, SOFT_TASKS, Content, Lesson, Task, load_content
+from finny_sim.content import NO_RETRY_STEPS, SOFT_TASKS, Content, Lesson, Task, load_content, load_json
 from finny_sim.economy import Economy
 from finny_sim.learner import Learner
 from finny_sim.personas import sample_profile
@@ -44,7 +46,10 @@ class ChildSim:
         self.content = content
         self.profile = sample_profile(self._uuid(), self.rng)
         self.learner = Learner(self.profile, content, self.rng)
-        self.economy = Economy(self.profile, content, self.rng, START, self._uuid, stamp)
+        self.economy = Economy(
+            self.profile, content, self.rng, START, self._uuid, stamp,
+            savings_skill=lambda: (self.learner.mastery("SAV-1") + self.learner.mastery("SAV-2")) / 2,
+        )
         self.seq = 0
         self.sessions: list[dict] = []
         self.events: list[dict] = []
@@ -52,7 +57,7 @@ class ChildSim:
         self.daily_rows: list[dict] = []
         self.completed: set[str] = set()
         self.resume_at: dict[str, int] = {}  # брошенный урок → с какого шага продолжить
-        self.attempts: dict[str, int] = {}
+        self.task_sessions: dict[str, int] = {}
         self.first_correct: dict[str, bool] = {}
 
     def _uuid(self) -> str:
@@ -75,6 +80,7 @@ class ChildSim:
                        kind="lesson", status="completed", started_at=stamp(t), finished_at=None,
                        first_time=first_time)
         self.sessions.append(session)
+        attempts: dict[str, int] = {}
         context: dict = {}
         t += timedelta(seconds=self.rng.uniform(20, 60))  # обложка и теория
 
@@ -84,7 +90,7 @@ class ChildSim:
             if group[0].grader == "change" and sum(context.get("paid", [])) <= group[0].scenario["price"]:
                 continue  # заплатил без сдачи — шага со сдачей нет, как в приложении
             for attempt in range(1, MAX_ATTEMPTS + 1):
-                passed, t = self.attempt_group(group, context, session_id, t)
+                passed, t = self.attempt_group(group, context, attempts, session_id, t)
                 if passed:
                     break
                 if attempt == MAX_ATTEMPTS or self.rng.random() < self.profile.abandon * attempt:
@@ -104,7 +110,7 @@ class ChildSim:
                 self.economy.chapter_reward(t)
         return t
 
-    def attempt_group(self, group: list[Task], context: dict, session_id: str, t: datetime):
+    def attempt_group(self, group: list[Task], context: dict, attempts: dict[str, int], session_id: str, t: datetime):
         """Одна попытка шага: ребёнок решает, как ответить, сервер оценивает."""
         p = {task.id: self.learner.p_correct(task) for task in group}
         mastery = {task.id: self.learner.mastery(task.competency) for task in group}
@@ -130,14 +136,16 @@ class ChildSim:
         passed = True
         for task in group:
             correct = A.checked(task, built[task.id])
-            attempt_no = self.attempts.get(task.id, 0) + 1
-            self.attempts[task.id] = attempt_no
+            attempt_no = attempts.get(task.id, 0) + 1
+            attempts[task.id] = attempt_no
+            if attempt_no == 1:
+                self.task_sessions[task.id] = self.task_sessions.get(task.id, 0) + 1
             self.first_correct.setdefault(task.id, correct)
             self.seq += 1
             self.events.append(dict(
                 id=self._uuid(), child_id=self.profile.child_id, session_id=session_id,
                 task_id=task.id, task_version=task.version, competency_id=task.competency,
-                grader=task.grader, attempt_no=attempt_no,
+                grader=task.grader, attempt_no=attempt_no, prior_sessions=self.task_sessions[task.id] - 1,
                 answer=json.dumps(built[task.id], ensure_ascii=False),
                 is_correct=correct, duration_ms=duration, device_seq=self.seq, occurred_at=stamp(t),
                 true_p=round(p[task.id], 4), true_mastery=round(mastery[task.id], 4),
@@ -191,8 +199,42 @@ def _write(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def simulate(children: int, weeks: int, seed: int, out: Path) -> dict:
+def apply_overrides(content: Content, overrides: dict | None) -> Content:
+    """Подменить параметры экономики для вычислительного эксперимента (калибровки).
+
+    decay_per_day — скорость голода; goal_multiplier — множитель цен целей;
+    treat_price — цена «особого угощения»;
+    nudge — включена ли подсказка «остаток в копилку» в итогах недели.
+    """
+    if not overrides:
+        return content
+    economy = copy.deepcopy(content.economy)
+    if "decay_per_day" in overrides:
+        economy["hunger"]["decay_per_day"] = overrides["decay_per_day"]
+    if "goal_multiplier" in overrides:
+        for goal in economy["goals"]:
+            if goal["size"] != "tutorial":
+                goal["target"] = round(goal["target"] * overrides["goal_multiplier"])
+    if "treat_price" in overrides:
+        for food in economy["foods"]:
+            if food["id"] in economy["special_treats"]:
+                food["price"] = overrides["treat_price"]
+    if "nudge" in overrides:
+        economy["week_end_nudge"] = {**economy.get("week_end_nudge", {}), "enabled": overrides["nudge"]}
+    return dataclasses.replace(content, economy=economy)
+
+
+def run_simulation(
+    children: int, weeks: int, seed: int, overrides: dict | None = None, economy: dict | None = None
+) -> dict[str, list[dict]]:
+    """Прогнать симуляцию и вернуть таблицы в памяти (без записи файлов).
+
+    economy — подменить параметры экономики целиком (например, исходной v1.0 для калибровки).
+    """
     content = load_content()
+    if economy is not None:
+        content = dataclasses.replace(content, economy=copy.deepcopy(economy))
+    content = apply_overrides(content, overrides)
     tables: dict[str, list[dict]] = {k: [] for k in
         ("children", "sessions", "events", "mastery_truth", "transactions", "daily", "weekly")}
     for index in range(children):
@@ -205,11 +247,16 @@ def simulate(children: int, weeks: int, seed: int, out: Path) -> dict:
         tables["transactions"] += sim.economy.transactions
         tables["daily"] += sim.daily_rows
         tables["weekly"] += sim.economy.weekly_rows
+    return tables
 
+
+def simulate(children: int, weeks: int, seed: int, out: Path, overrides: dict | None = None) -> dict:
+    tables = run_simulation(children, weeks, seed, overrides)
     out.mkdir(parents=True, exist_ok=True)
     for name, rows in tables.items():
         _write(out / f"{name}.csv", rows)
-    meta = dict(children=children, weeks=weeks, seed=seed, start=START.date().isoformat(),
+    meta = dict(catalog_version=load_json("lessons.json")["version"], economy_version=load_json("economy.json")["version"],
+                attempt_scope="session_task", children=children, weeks=weeks, seed=seed, start=START.date().isoformat(), overrides=overrides,
                 **{f"rows_{k}": len(v) for k, v in tables.items()})
     (out / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     return meta

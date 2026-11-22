@@ -29,6 +29,7 @@ class Economy:
         start: datetime,
         new_id: Callable[[], str],
         stamp: Callable[[datetime], str],
+        savings_skill: Callable[[], float] = lambda: 0.5,
     ):
         self.e = content.economy
         self.h = self.e["hunger"]
@@ -37,6 +38,7 @@ class Economy:
         self.rng = rng
         self.new_id = new_id
         self.stamp = stamp
+        self.savings_skill = savings_skill  # освоенность навыков накоплений (от модели знаний)
         self.foods = self.e["foods"]
         self.food_by_id = {f["id"]: f for f in self.foods}
 
@@ -135,6 +137,7 @@ class Economy:
     def start_week(self, t: datetime) -> None:
         """Понедельник: итоги прошлой недели, проценты, карманные деньги, план."""
         if self.week is not None:
+            self.week_end_nudge(t - timedelta(minutes=1))
             self.close_week()
             interest = math.floor(self.e["interest"]["weekly_rate"] * self.week["min_piggy"])
             if interest > 0:
@@ -156,6 +159,19 @@ class Economy:
             for _ in range(self.rng.randint(1, cap["max_per_week"])):
                 due = t + timedelta(days=self.rng.randint(0, 6), hours=self.rng.randint(15, 19))
                 self.parent_tasks.append((due, self.rng.choice([5, 10, 15, cap["max_reward"]])))
+
+    def week_end_nudge(self, t: datetime) -> None:
+        """Итоги недели: питомец предлагает положить остаток кошелька в копилку.
+
+        Ребёнок соглашается тем охотнее, чем лучше освоил навыки накоплений
+        и чем ближе ему такая стратегия (у «транжиры» — редко).
+        """
+        nudge = self.e.get("week_end_nudge", {})
+        if not nudge.get("enabled") or self.wallet <= 0:
+            return
+        p_accept = (0.3 + 0.6 * self.savings_skill()) * self.strategy["nudge_accept"]
+        if self.rng.random() < p_accept:
+            self.deposit(t, self.wallet)
 
     def close_week(self) -> None:
         w = self.week

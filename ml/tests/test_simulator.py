@@ -43,11 +43,18 @@ def test_every_answer_matches_server_grading(data):
 
 
 def test_attempts_are_numbered_from_one(data):
-    first = {}
+    counts = {}
+    visits = {}
     for event in read(data / "events.csv"):
-        key = (event["child_id"], event["task_id"])
-        first.setdefault(key, int(event["attempt_no"]))
-    assert set(first.values()) == {1}
+        task = (event["child_id"], event["task_id"])
+        key = (*task, event["session_id"])
+        if key not in counts:
+            visits[task] = visits.get(task, 0) + 1
+        counts[key] = counts.get(key, 0) + 1
+        assert int(event["attempt_no"]) == counts[key]
+        assert int(event["prior_sessions"]) == visits[task] - 1
+    assert max(counts.values()) >= 2
+    assert max(visits.values()) >= 2
 
 
 def test_balances_never_negative(data):
@@ -68,3 +75,34 @@ def test_allowance_every_monday(data):
     allowances = [t for t in read(data / "transactions.csv") if t["kind"] == "allowance"]
     children = read(data / "children.csv")
     assert len(allowances) == len(children) * 4  # 4 недели — 4 понедельника
+
+
+def test_week_end_nudge_moves_leftover_to_piggy():
+    """Подсказка «остаток в копилку» уменьшает деньги, залежавшиеся в кошельке."""
+    from finny_sim.simulate import run_simulation
+
+    def wallet_end(nudge: bool) -> float:
+        weekly = run_simulation(30, 4, 11, {"nudge": nudge})["weekly"]
+        return sum(w["wallet_end"] for w in weekly) / len(weekly)
+
+    assert wallet_end(True) < wallet_end(False)
+
+def test_retry_then_reopen_payment_task(monkeypatch):
+    from dataclasses import replace
+
+    from finny_sim import answers
+    from finny_sim.simulate import ChildSim, START
+
+    content = load_content()
+    lesson = next(lesson for lesson in content.lessons if lesson.id == "payments-2")
+    task = next(task for task in lesson.tasks if task.id == "payments-2.practice.pairs")
+    lesson = replace(lesson, tasks=[task])
+    child = ChildSim(0, content, 42)
+    child.profile = replace(child.profile, abandon=0)
+    values = iter([7, 8, 8])
+    monkeypatch.setattr(answers, "number_answer", lambda *_: {"value": next(values)})
+    child.run_lesson(lesson, False, START)
+    child.run_lesson(lesson, False, START)
+    assert [event["attempt_no"] for event in child.events] == [1, 2, 1]
+    assert [event["is_correct"] for event in child.events] == [False, True, True]
+    assert [event["prior_sessions"] for event in child.events] == [0, 0, 1]

@@ -1,6 +1,6 @@
 {
-  "version": 1,
-  "note": "Параметры игровой экономики (модель v1, см. документ проекта economy-model-v1). Один файл для сервера, приложения и генератора синтетических данных. Числа стартовые — уточняются симуляцией.",
+  "version": "1.1",
+  "note": "Параметры игровой экономики. v1.1 — откалиброваны вычислительным экспериментом (ml/notebooks/02_economy_calibration.ipynb) от исходной v1.0 (ml/calibration/economy_v1_0.json). Один файл для сервера, приложения и генератора.",
   "allowance_weekly": 70,
   "lesson_reward": {
     "base": 10,
@@ -21,21 +21,22 @@
   "hunger": {
     "max": 100,
     "start": 80,
-    "decay_per_day": 15,
+    "decay_per_day": 17,
     "full_from": 60,
     "very_hungry_below": 25,
     "special_wish_after_hours": 24
   },
   "special_treats": [
-    "salmon",
-    "burger",
-    "pizza",
-    "chicken-leg"
+    "birthday-cake"
   ],
   "budget_plan_default": {
     "need": 50,
     "want": 30,
     "save": 20
+  },
+  "week_end_nudge": {
+    "enabled": true,
+    "note": "В итогах недели питомец предлагает перенести остаток кошелька в копилку; ребёнок может отказаться"
   },
   "foods": [
     {
@@ -317,6 +318,14 @@
       "price": 11,
       "nutrition": 12,
       "necessity": "need"
+    },
+    {
+      "id": "birthday-cake",
+      "name": "Праздничный торт",
+      "category": "special",
+      "price": 30,
+      "nutrition": 30,
+      "necessity": "need"
     }
   ],
   "wardrobe": [
@@ -351,31 +360,31 @@
     {
       "id": "ice-cream",
       "name": "Большое мороженое",
-      "target": 30,
+      "target": 45,
       "size": "small"
     },
     {
       "id": "teddy",
       "name": "Плюшевый мишка",
-      "target": 45,
+      "target": 70,
       "size": "small"
     },
     {
       "id": "car",
       "name": "Игрушечная машинка",
-      "target": 70,
+      "target": 105,
       "size": "medium"
     },
     {
       "id": "bicycle",
       "name": "Велосипед",
-      "target": 120,
+      "target": 180,
       "size": "medium"
     },
     {
       "id": "devices",
       "name": "Ноутбук",
-      "target": 150,
+      "target": 225,
       "size": "large"
     }
   ]

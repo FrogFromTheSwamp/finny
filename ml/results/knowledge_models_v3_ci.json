@@ -1,0 +1,416 @@
+{
+  "dataset": "sim_v3",
+  "events_sha256": "d5de0d2df5baf7ac088818e29dd338c1408ec22cc4d02d414e12c814c7bf7b3c",
+  "dataset_seed": 42,
+  "split_seed": 42,
+  "test_child_ids": [
+    "01022f75-4028-46b9-8fd9-a53c5bc1a3af",
+    "023b5afb-b8a0-4f13-8eb5-60e1debf414a",
+    "02658c6d-607c-4fd6-a189-84f191e32f1a",
+    "0ab32e50-6122-4994-967a-cd2ced3a344b",
+    "122edb27-13e8-4feb-8bab-01a6abb62c3e",
+    "1780ce37-25fa-48fe-a24c-4e38b29ba9e9",
+    "17cece36-6c2d-4ef6-8cd5-005628a5aac1",
+    "18710d65-0569-4905-a937-fa5c0166ac90",
+    "19f206f3-d20b-49c5-8d2d-a90556c9eca0",
+    "230abe2b-2cae-40b2-bb19-43441e4a2d42",
+    "2c09c82a-f744-45c4-aba2-e1a57e2686b6",
+    "2f20df3a-4945-4be9-ad27-c95de2972a56",
+    "2f2b2f40-f5e3-4f80-97d3-40d97f135298",
+    "321023b8-158b-4db9-bc1d-0ce317e0cfba",
+    "3817f1f5-4b57-4a24-8dac-08b73636010d",
+    "3a2c487a-bc2a-4d95-8e73-3e34720dcdc7",
+    "3e21eaa9-5a8f-4dd0-9d58-b306ddf6d523",
+    "41316e3a-1dee-46f4-9c7a-07c9d0aaea65",
+    "436f055f-6a62-4364-b829-bdc88823601e",
+    "4626b002-fc0f-41ce-8d53-55193e201f6a",
+    "49bf794e-5127-43a8-b987-8287e19a4d4a",
+    "4bf0ccb6-ebaa-4021-9a9b-bf9fc214646a",
+    "5149675b-660f-4af1-8427-54e3c792ba32",
+    "53bbda16-0d49-4506-b01d-0eb09cece2d7",
+    "53bd1a3f-638a-4fba-81f2-06eb1483a529",
+    "6a3bee3e-e7c7-4ac3-8d66-7e9a28280fc1",
+    "6a57ea83-ac11-47d9-b189-6d89cea02d4a",
+    "75a439f2-7b17-4463-aacc-fa56c32f34f8",
+    "7837b91b-3efc-410c-a5ae-c62c565fde55",
+    "7afab071-e8ba-4f02-b45c-ef25094ed86f",
+    "8acfaeb3-25e0-4d69-91c9-85f12e79901d",
+    "8d1e68bc-0eb2-4c03-8d6c-97e76d137f4d",
+    "a0c6efa6-2522-403e-91d6-05d78a48e001",
+    "a8931b43-9f7d-4c65-8a36-9c4c6e3cdbe9",
+    "a9ed6f09-2a83-4f1c-b2f7-7ea382d19f6c",
+    "af343fe7-e01c-420f-804a-46d8cb3e27a0",
+    "b286fd48-483e-49ff-98dd-1f4f8bdea485",
+    "c2c43737-42a2-44aa-a32c-74621b2bfbfc",
+    "c964c6d7-6b35-4f77-a895-f557ee741cd7",
+    "cf8f5640-0de3-4018-9f2d-893db202b168",
+    "d05cfefc-4a33-47b6-a762-c1b9ce86b2c6",
+    "d095bba4-abdc-4d5c-aee8-cf10b5db9fe5",
+    "d1bd4e3a-8006-4300-9985-8ce93370d7da",
+    "d42b0f4b-e940-41d0-8187-330d4628cae7",
+    "e0dfc5f4-ae8e-44c9-8474-4e3dea423a22",
+    "e15454d6-7bf8-4a37-9b40-89adca25bdbe",
+    "e2451d9c-37bf-4d54-b959-f04ff425a738",
+    "e3b8ab30-24be-4661-8806-4421b0c82a09",
+    "e757333d-96b2-4d63-9311-f347ddb76566",
+    "ec3de0ea-b871-4aa0-b0c0-844803834d88",
+    "ec8cf2d7-4900-462c-b2bc-a3931efa3ede",
+    "ee5967c3-f116-465f-b061-3f5859b526ed",
+    "ee7d6bf0-44fe-46e2-823b-93d59fd7fb64",
+    "f4817365-1046-4759-90ac-641ccd4e3fc3",
+    "f5bcfd20-4048-48a5-a228-bf0a7ba1fa63",
+    "f60c9963-c921-4c73-b1b8-efafae7c2ee0",
+    "f99bcebc-bd41-411e-9095-60f9a363e90c",
+    "fa329e4a-2d82-420f-90a6-c2a57fdc91a6",
+    "fd8a86f2-ba20-4d5d-b68e-24e5679fe76a",
+    "fe2849af-92ba-4717-82ff-329c6cc907e1"
+  ],
+  "train_children": 240,
+  "train_answers": 40226,
+  "test_children": 60,
+  "test_answers": 9819,
+  "method": "Интервалы отражают разброс по тестовым детям при фиксированных, один раз обученных моделях.",
+  "bootstrap": {
+    "unit": "child_id",
+    "paired": true,
+    "replacement": true,
+    "seed": 2026,
+    "repeats": 2000,
+    "percentiles": [
+      2.5,
+      97.5
+    ],
+    "difference": "A minus B"
+  },
+  "personal": {
+    "prior_weight": 5,
+    "formula": "(past_correct + 5 * train_skill_rate) / (past_correct + past_wrong + 5)"
+  },
+  "task_diagnostic": {
+    "features": "PFA per skill + task_id indicators",
+    "regularization": "L2, C=1",
+    "unknown_task": "reference task",
+    "by_skill": {
+      "BUD-1": {
+        "reference_task": "budget-3.shop.juice",
+        "train_task_count": 9,
+        "unseen_test_answers": 0
+      },
+      "BUD-2": {
+        "reference_task": "budget-2.priority.bicycle",
+        "train_task_count": 5,
+        "unseen_test_answers": 0
+      },
+      "BUD-3": {
+        "reference_task": "budget-4.swipe.1",
+        "train_task_count": 1,
+        "unseen_test_answers": 0
+      },
+      "BUD-4": {
+        "reference_task": "budget-3.shop.reserve",
+        "train_task_count": 2,
+        "unseen_test_answers": 0
+      },
+      "PAY-1": {
+        "reference_task": "payments-1.practice.basket",
+        "train_task_count": 4,
+        "unseen_test_answers": 0
+      },
+      "PAY-2": {
+        "reference_task": "payments-2.practice.ticket",
+        "train_task_count": 5,
+        "unseen_test_answers": 0
+      },
+      "PAY-3": {
+        "reference_task": "savings-3.sort.c1",
+        "train_task_count": 9,
+        "unseen_test_answers": 0
+      },
+      "SAV-1": {
+        "reference_task": "savings-4.swipe.1",
+        "train_task_count": 3,
+        "unseen_test_answers": 0
+      },
+      "SAV-2": {
+        "reference_task": "savings-4.swipe.2",
+        "train_task_count": 1,
+        "unseen_test_answers": 0
+      },
+      "SAV-3": {
+        "reference_task": "savings-2.weekly",
+        "train_task_count": 1,
+        "unseen_test_answers": 0
+      },
+      "SEC-1": {
+        "reference_task": "payments-3.swipe.3",
+        "train_task_count": 1,
+        "unseen_test_answers": 0
+      }
+    }
+  },
+  "metrics": {
+    "rate": {
+      "AUC": {
+        "estimate": 0.6105075041790099,
+        "ci95": [
+          0.5942083090501828,
+          0.627431826554512
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.4653432718614498,
+        "ci95": [
+          0.4545587932238274,
+          0.4757976335215702
+        ]
+      }
+    },
+    "PFA": {
+      "AUC": {
+        "estimate": 0.6694294489829162,
+        "ci95": [
+          0.6492077405458181,
+          0.688602198214765
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.454802564210952,
+        "ci95": [
+          0.44365386175194255,
+          0.4654829657171043
+        ]
+      }
+    },
+    "BKT": {
+      "AUC": {
+        "estimate": 0.6696159647472679,
+        "ci95": [
+          0.6484989065354805,
+          0.689025321606644
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.45492489218520327,
+        "ci95": [
+          0.44359924368456183,
+          0.4656333504862937
+        ]
+      }
+    },
+    "personal": {
+      "AUC": {
+        "estimate": 0.6423227341785254,
+        "ci95": [
+          0.6162985496666422,
+          0.6644068894500919
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.4620341006412034,
+        "ci95": [
+          0.44998447139893366,
+          0.4730694453355503
+        ]
+      }
+    },
+    "task_diagnostic": {
+      "AUC": {
+        "estimate": 0.6957673471276801,
+        "ci95": [
+          0.6781164029764167,
+          0.7127730944845855
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.44795949558906223,
+        "ci95": [
+          0.4367397025053861,
+          0.4578984187293573
+        ]
+      }
+    }
+  },
+  "differences": [
+    {
+      "A": "PFA",
+      "B": "rate",
+      "AUC": {
+        "estimate": 0.058921944803906334,
+        "ci95": [
+          0.044357599375884474,
+          0.07133054174354395
+        ]
+      },
+      "RMSE": {
+        "estimate": -0.010540707650497805,
+        "ci95": [
+          -0.013286731081897641,
+          -0.00792525350717049
+        ]
+      }
+    },
+    {
+      "A": "BKT",
+      "B": "rate",
+      "AUC": {
+        "estimate": 0.059108460568258026,
+        "ci95": [
+          0.042982606708094076,
+          0.07357981463471025
+        ]
+      },
+      "RMSE": {
+        "estimate": -0.010418379676246536,
+        "ci95": [
+          -0.013751862894724704,
+          -0.007224808008430691
+        ]
+      }
+    },
+    {
+      "A": "personal",
+      "B": "rate",
+      "AUC": {
+        "estimate": 0.03181522999951547,
+        "ci95": [
+          0.01182697580374541,
+          0.04909317466355281
+        ]
+      },
+      "RMSE": {
+        "estimate": -0.0033091712202463763,
+        "ci95": [
+          -0.00698603546969854,
+          2.3386254126694903e-05
+        ]
+      }
+    },
+    {
+      "A": "task_diagnostic",
+      "B": "rate",
+      "AUC": {
+        "estimate": 0.08525984294867017,
+        "ci95": [
+          0.07198785705791537,
+          0.09726425724066567
+        ]
+      },
+      "RMSE": {
+        "estimate": -0.017383776272387574,
+        "ci95": [
+          -0.020943332510292387,
+          -0.014011285639117108
+        ]
+      }
+    },
+    {
+      "A": "BKT",
+      "B": "PFA",
+      "AUC": {
+        "estimate": 0.00018651576435169126,
+        "ci95": [
+          -0.0043845215553634685,
+          0.005131084419274391
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.0001223279742512684,
+        "ci95": [
+          -0.0011748743106051202,
+          0.0013626777375362218
+        ]
+      }
+    },
+    {
+      "A": "personal",
+      "B": "PFA",
+      "AUC": {
+        "estimate": -0.027106714804390863,
+        "ci95": [
+          -0.03809146385410484,
+          -0.016268681630002068
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.0072315364302514284,
+        "ci95": [
+          0.004976415598126715,
+          0.009414885982428591
+        ]
+      }
+    },
+    {
+      "A": "task_diagnostic",
+      "B": "PFA",
+      "AUC": {
+        "estimate": 0.02633789814476384,
+        "ci95": [
+          0.020094611102800315,
+          0.03304145561047152
+        ]
+      },
+      "RMSE": {
+        "estimate": -0.00684306862188977,
+        "ci95": [
+          -0.008497489408649686,
+          -0.005160553101864672
+        ]
+      }
+    },
+    {
+      "A": "personal",
+      "B": "BKT",
+      "AUC": {
+        "estimate": -0.027293230568742555,
+        "ci95": [
+          -0.04013374490650958,
+          -0.015194274945390334
+        ]
+      },
+      "RMSE": {
+        "estimate": 0.00710920845600016,
+        "ci95": [
+          0.004356280662244262,
+          0.009834609236951033
+        ]
+      }
+    },
+    {
+      "A": "task_diagnostic",
+      "B": "BKT",
+      "AUC": {
+        "estimate": 0.026151382380412147,
+        "ci95": [
+          0.01793594787266438,
+          0.03492062103750579
+        ]
+      },
+      "RMSE": {
+        "estimate": -0.006965396596141038,
+        "ci95": [
+          -0.008982538665321945,
+          -0.005020674869537509
+        ]
+      }
+    },
+    {
+      "A": "task_diagnostic",
+      "B": "personal",
+      "AUC": {
+        "estimate": 0.0534446129491547,
+        "ci95": [
+          0.040651237359668024,
+          0.06738379863849828
+        ]
+      },
+      "RMSE": {
+        "estimate": -0.014074605052141198,
+        "ci95": [
+          -0.01700694649380694,
+          -0.011193394917267068
+        ]
+      }
+    }
+  ],
+  "elapsed_seconds": 4.7214167000202
+}

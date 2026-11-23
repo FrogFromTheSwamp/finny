@@ -152,6 +152,12 @@ class ItemResult(BaseModel):
     reason: str | None = None
 
 
+class SyncWarning(BaseModel):
+    code: Literal["duplicate_first_attempt", "mastery_rebuild_failed"]
+    event_id: uuid.UUID | None = None
+
+
 class LearningSyncOut(BaseModel):
     sessions: list[ItemResult]
     events: list[ItemResult]
+    warnings: list[SyncWarning] = Field(default_factory=list)

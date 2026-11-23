@@ -25,15 +25,16 @@ STEPS = text("""
            count(*) FILTER (WHERE e.is_correct) AS correct,
            count(*) FILTER (WHERE NOT e.is_correct) AS wrong
     FROM first_answers e JOIN tasks t ON (t.id, t.version) = (e.task_id, e.task_version)
+    WHERE CAST(:skills AS varchar[]) IS NULL OR t.competency_id = ANY(CAST(:skills AS varchar[]))
     GROUP BY t.competency_id, e.session_id, e.occurred_at
     ORDER BY t.competency_id, e.occurred_at, min(e.device_seq) NULLS LAST, e.session_id
 """)
 
 
-def rebuild_child(db: Session, child_id: uuid.UUID) -> int:
-    """Перечитать историю навыков и обновить только изменившиеся строки кэша."""
+def rebuild_child(db: Session, child_id: uuid.UUID, skills: set[str] | None = None) -> int:
+    """Перечитать историю выбранных навыков (по умолчанию всех) под блокировкой ребёнка."""
     db.execute(select(Child.id).where(Child.id == child_id).with_for_update()).scalar_one()
-    rows = db.execute(STEPS, {"child": child_id}).mappings()
+    rows = db.execute(STEPS, {"child": child_id, "skills": sorted(skills) if skills is not None else None}).mappings()
     changed = 0
     for skill, history in groupby(rows, key=lambda row: row["skill"]):
         params = active_params(db, skill)

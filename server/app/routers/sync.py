@@ -7,23 +7,25 @@
 - каждый объект обрабатывается отдельно: плохой ответ не мешает
   сохранить хорошие из той же пачки.
 """
+import logging
 import uuid
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter
-from sqlalchemy import select
+from sqlalchemy import func, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 
 from app.deps import CurrentChildAuth, DbSession
 from app.grading import GradingError, grade
-from app.models import LearningEvent, Lesson, LessonSession, Recommendation, Task
-from app.schemas import EventIn, ItemResult, LearningSyncIn, LearningSyncOut, SessionIn
+from app.models import Child, LearningEvent, Lesson, LessonSession, Recommendation, Task
+from app.rebuild_mastery import rebuild_child
+from app.schemas import EventIn, ItemResult, LearningSyncIn, LearningSyncOut, SessionIn, SyncWarning
 from app.security import now_utc
 
 router = APIRouter(prefix="/sync", tags=["sync"])
+logger = logging.getLogger(__name__)
 
-# Часы телефона могут спешить. Время из будущего дальше этого запаса
-# заменяем на время сервера (порядок событий всё равно сохраняется в device_seq).
+# Допуск для опережающих часов телефона.
 MAX_CLOCK_SKEW = timedelta(minutes=5)
 FINAL_STATUSES = {"completed", "abandoned"}
 
@@ -74,11 +76,48 @@ def _upsert_session(
     return ItemResult(id=s.id, status="duplicate")
 
 
+def _stored_results(db: DbSession, child_id: uuid.UUID, ids: set[uuid.UUID]) -> dict[uuid.UUID, ItemResult]:
+    """Вернуть исходную оценку для уже доставленных UUID этого ребёнка."""
+    stored = db.execute(select(LearningEvent.id, LearningEvent.child_id, LearningEvent.is_correct)
+                        .where(LearningEvent.id.in_(ids)))
+    return {event_id: (ItemResult(id=event_id, status="duplicate", is_correct=correct)
+                       if owner == child_id else _rejected(event_id, "id события уже занят"))
+            for event_id, owner, correct in stored}
+
+
+def _prepare_event_times(db: DbSession, child_id: uuid.UUID, rows: list[dict],
+                         now: datetime) -> set[tuple[uuid.UUID, str]]:
+    """Сохранить интервалы нажатий и закрепить порядок приёма дублей первой попытки."""
+    latest = max(row["occurred_at"] for row in rows)
+    offset = latest - now if latest - now > MAX_CLOCK_SKEW else timedelta()
+    keys = {(row["session_id"], row["task_id"]) for row in rows
+            if row["session_id"] is not None and row["attempt_no"] == 1}
+    last_receipt = {}
+    if keys:
+        event = LearningEvent
+        receipts = db.execute(select(event.session_id, event.task_id, func.max(event.received_at))
+                              .where(event.child_id == child_id, event.attempt_no == 1,
+                                     event.is_correct.is_not(None), tuple_(event.session_id, event.task_id).in_(keys))
+                              .group_by(event.session_id, event.task_id))
+        last_receipt = {(session_id, task): received for session_id, task, received in receipts}
+    already_seen = set(last_receipt)
+    for row in rows:
+        row["occurred_at"] -= offset
+        row["received_at"] = now
+        if row["session_id"] is not None and row["attempt_no"] == 1:
+            key = (row["session_id"], row["task_id"])
+            # При совпадении времени второй UUID не вытеснит первый даже с меньшим device_seq.
+            if key in last_receipt:
+                row["received_at"] = max(now, last_receipt[key] + timedelta(microseconds=1))
+            last_receipt[key] = row["received_at"]
+    return already_seen
+
+
 def _store_events(
     db: DbSession, child_id: uuid.UUID, device_id: uuid.UUID, events: list[EventIn], now: datetime
-) -> list[ItemResult]:
+) -> tuple[list[ItemResult], set[str], list[SyncWarning]]:
     if not events:
-        return []
+        return [], set(), []
 
     # Задания и сессии загружаем одним запросом на всю пачку, а не по одному
     tasks = {
@@ -98,10 +137,11 @@ def _store_events(
         else set()
     )
 
-    results: dict[uuid.UUID, ItemResult] = {}
+    # Уже доставленные UUID не участвуют в оценке сдвига часов новой пачки.
+    results = _stored_results(db, child_id, {e.id for e in events})
     rows: list[dict] = []
     for e in events:
-        if e.id in results:  # тот же id дважды в одной пачке
+        if e.id in results:
             continue
         task = tasks.get((e.task_id, e.task_version))
         if task is None:
@@ -130,12 +170,15 @@ def _store_events(
                 "is_correct": is_correct,
                 "hint_used": e.hint_used,
                 "duration_ms": e.duration_ms,
-                "occurred_at": _clamp(e.occurred_at, now),
+                "occurred_at": e.occurred_at,
             }
         )
         results[e.id] = ItemResult(id=e.id, status="accepted", is_correct=is_correct)
 
+    skills: set[str] = set()
+    warnings: list[SyncWarning] = []
     if rows:
+        seen = _prepare_event_times(db, child_id, rows, now)
         # INSERT ... ON CONFLICT DO NOTHING RETURNING id:
         # вернутся только реально вставленные; остальные уже были в базе
         inserted = set(
@@ -146,23 +189,26 @@ def _store_events(
                 .returning(LearningEvent.id)
             )
         )
+        for row in rows:
+            if row["id"] not in inserted or row["attempt_no"] != 1 or row["session_id"] is None:
+                continue
+            key = (row["session_id"], row["task_id"])
+            if key in seen:
+                warnings.append(SyncWarning(code="duplicate_first_attempt", event_id=row["id"]))
+            else:
+                seen.add(key)
+                skills.add(tasks[(row["task_id"], row["task_version"])].competency_id)
         already_stored = {row["id"] for row in rows} - inserted
         if already_stored:
-            stored = db.execute(
-                select(LearningEvent.id, LearningEvent.child_id, LearningEvent.is_correct).where(
-                    LearningEvent.id.in_(already_stored)
-                )
-            ).all()
-            for event_id, owner_id, stored_correct in stored:
-                if owner_id != child_id:
-                    results[event_id] = _rejected(event_id, "id события уже занят")
-                else:
-                    results[event_id] = ItemResult(
-                        id=event_id, status="duplicate", is_correct=stored_correct
-                    )
+            results.update(_stored_results(db, child_id, already_stored))
 
-    # Неделя 4: здесь же будет пересчёт оценок освоения (BKT) по новым ответам
-    return [results[e.id] for e in events]
+    ordered = []
+    for event in events:
+        result = results[event.id]
+        ordered.append(result)
+        if result.status == "accepted":
+            results[event.id] = ItemResult(id=event.id, status="duplicate", is_correct=result.is_correct)
+    return ordered, skills, warnings
 
 
 @router.post("/learning", response_model=LearningSyncOut)
@@ -174,12 +220,21 @@ def sync_learning(body: LearningSyncIn, auth: CurrentChildAuth, db: DbSession) -
     accepted и duplicate телефон может удалить из своей очереди,
     rejected — тоже удалить, повторять бесполезно.
     """
-    now = now_utc()
     child_id, device_id = auth.child.id, auth.device.id
+    db.execute(select(Child.id).where(Child.id == child_id).with_for_update()).scalar_one()
+    now = now_utc()
 
     session_results = [_upsert_session(db, child_id, device_id, s, now) for s in body.sessions]
-    event_results = _store_events(db, child_id, device_id, body.events, now)
+    event_results, skills, warnings = _store_events(db, child_id, device_id, body.events, now)
+    if skills:
+        try:
+            with db.begin_nested():
+                rebuild_child(db, child_id, skills)
+        except Exception:
+            # Журнал остаётся во внешней транзакции. Кэш восстановит rebuild_mastery.
+            logger.exception("Сбой пересчёта mastery для ребёнка %s, навыки %s", child_id, sorted(skills))
+            warnings.append(SyncWarning(code="mastery_rebuild_failed"))
 
     auth.device.last_sync_at = now
     db.commit()
-    return LearningSyncOut(sessions=session_results, events=event_results)
+    return LearningSyncOut(sessions=session_results, events=event_results, warnings=warnings)

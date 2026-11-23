@@ -38,6 +38,28 @@ def load(artifact: dict) -> int:
         return import_params(db, json.dumps(artifact).encode())
 
 
+def test_import_fills_only_missing_error_flags(artifact: dict) -> None:
+    row = artifact["test"]["by_skill"]["BUD-4"]
+    row["parameters"].update(p_init=0.1, p_learn=0.5)
+    row["at_limit"] = {"p_learn": "upper"}
+    assert load(artifact) == 11
+    with SessionLocal.begin() as db:
+        trained = db.get(BktParams, ("BUD-4", VERSION))
+        assert trained.metrics["errors_raise_mastery"] is True
+        assert db.get(BktParams, ("BUD-2", VERSION)).metrics["errors_raise_mastery"] is False
+        original = dict(trained.metrics)
+        trained_at = trained.trained_at
+        trained.metrics = {k: v for k, v in original.items() if k != "errors_raise_mastery"}
+    assert load(artifact) == 1
+    assert load(artifact) == 0
+    with SessionLocal.begin() as db:
+        trained = db.get(BktParams, ("BUD-4", VERSION))
+        assert trained.metrics == original and trained.trained_at == trained_at
+        trained.metrics = {**original, "errors_raise_mastery": False}
+    with pytest.raises(ValueError, match="конфликт метаданных"):
+        load(artifact)
+
+
 def test_repeat_import_and_version_conflict(artifact: dict) -> None:
     assert load(artifact) == 11
     with SessionLocal() as db:
@@ -93,6 +115,7 @@ def test_replay_after_fallback_grouping_and_logical_duplicate(artifact: dict) ->
         assert (cached.attempts, cached.model_version) == (3, DEFAULT_VERSION)
         fallback = db.get(BktParams, ("BUD-1", DEFAULT_VERSION))
         assert fallback.is_active and fallback.metrics["reliable"] is False
+        assert fallback.metrics["errors_raise_mastery"] is False
         assert (fallback.p_init, fallback.p_learn, fallback.p_guess, fallback.p_slip) == (0.2, 0.1, 0.25, 0.15)
     assert load(artifact) == 11
     assert rebuild_all() == (1, 1)

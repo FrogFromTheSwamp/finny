@@ -6,6 +6,7 @@ import sys
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from app.bkt import bkt_step
 from app.db import SessionLocal
 from app.models import BktParams, Competency
 
@@ -17,8 +18,27 @@ BOUNDS = {"guess_max": 0.499, "slip_max": 0.499, "learn_max": 0.5}
 RULE = "minimum learn_max with pooled validation RMSE <= best validation RMSE + 0.0005"
 
 
+def errors_raise_mastery(p_init: float, p_learn: float, p_guess: float, p_slip: float) -> bool:
+    """Три отдельных ошибочных ответа повысили освоение более чем на 0,2."""
+    mastery = p_init
+    for _ in range(3):
+        mastery = bkt_step(mastery, correct=0, wrong=1, p_learn=p_learn,
+                           p_guess=p_guess, p_slip=p_slip).p_mastery
+    return mastery - p_init > 0.2
+
+
+def _fill_error_flag(row: BktParams, flag: bool) -> bool:
+    """Дополнить старую строку, проверив уже записанное значение при повторе."""
+    if "errors_raise_mastery" in row.metrics:
+        if row.metrics["errors_raise_mastery"] is not flag:
+            raise ValueError(f"{row.competency_id}: конфликт метаданных версии {row.model_version}")
+        return False
+    row.metrics = {**row.metrics, "errors_raise_mastery": flag}
+    return True
+
+
 def import_params(db: Session, raw: bytes) -> int:
-    """Проверить артефакт и активировать неизменяемые версии. Вернуть число активаций."""
+    """Вернуть число добавленных или обновлённых строк, включая заполнение флага."""
     artifact = json.loads(raw.decode("utf-8-sig"))
     final = artifact["test"]
     if (artifact["model_version"] != VERSION or artifact["source"] != "synthetic"
@@ -60,16 +80,23 @@ def import_params(db: Session, raw: bytes) -> int:
                     "artifact": "knowledge_models_v4_plearn.json", "artifact_sha256": digest,
                     "events_sha256": artifact["events_sha256"], "refit_children": 240,
                     "p_learn_cap": BOUNDS["learn_max"], "selection_rule": RULE,
-                    "at_limit": sorted(limits), "reliable": not limits}
+                    "at_limit": sorted(limits), "reliable": not limits,
+                    "errors_raise_mastery": errors_raise_mastery(**params)}
+        fallback = db.get(BktParams, (skill, DEFAULT_VERSION))
+        if fallback is not None:
+            changes += _fill_error_flag(fallback, errors_raise_mastery(
+                **{name: getattr(fallback, name) for name in FIELDS}))
         key = (skill, VERSION)
         existing = db.get(BktParams, key)
         if existing is not None:
             if any(getattr(existing, name) != params[name] for name in FIELDS):
                 raise ValueError(f"{skill}: конфликт параметров версии {VERSION}")
+            filled = _fill_error_flag(existing, metadata["errors_raise_mastery"])
             # Сохраняем хеш первого файла при повторе того же JSON с иным форматированием.
             if existing.metrics != {**metadata, "artifact_sha256": existing.metrics.get("artifact_sha256")}:
                 raise ValueError(f"{skill}: конфликт метаданных версии {VERSION}")
             if existing.is_active:
+                changes += filled
                 continue
         db.execute(update(BktParams).where(BktParams.competency_id == skill, BktParams.is_active)
                    .values(is_active=False))
@@ -92,7 +119,8 @@ def active_params(db: Session, skill: str) -> BktParams:
     if fallback is None:
         fallback = BktParams(competency_id=skill, model_version=DEFAULT_VERSION, **DEFAULT_PARAMS,
                              metrics={"source": "fallback", "dataset": None, "p_learn_cap": None,
-                                      "selection_rule": "no active parameters", "at_limit": [], "reliable": False})
+                                      "selection_rule": "no active parameters", "at_limit": [], "reliable": False,
+                                      "errors_raise_mastery": errors_raise_mastery(**DEFAULT_PARAMS)})
         db.add(fallback)
     fallback.is_active = True
     return fallback
@@ -104,5 +132,5 @@ if __name__ == "__main__":
             activated = import_params(db, sys.stdin.buffer.read())
     except (ValueError, KeyError, TypeError) as exc:
         sys.exit(f"Импорт отменён: {exc}")
-    print(f"{VERSION}: активировано строк {activated}")
+    print(f"{VERSION}: добавлено или обновлено строк {activated}")
 
